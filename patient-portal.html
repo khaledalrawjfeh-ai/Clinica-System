@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGON - بوابة المريض</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --card-hover: #f1f5f9;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #0d9488;
+            --primary-l: rgba(13,148,136,0.15);
+            --sky: #0ea5e9;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --purple: #8b5cf6;
+        }
+
+        [data-theme="dark"] {
+            --bg: #061118;
+            --card: #0c1c24;
+            --card-hover: #112631;
+            --border: #16303d;
+            --text: #f8fafc;
+            --muted: #648192;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Tajawal', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            min-height: 100vh;
+            padding-bottom: 50px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Top Nav */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 30px;
+            background: rgba(var(--bg), 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .nav-logo { font-weight: 900; font-size: 1.1rem; color: var(--primary); letter-spacing: 1px; }
+        .nav-logo span { color: var(--muted); font-weight: 500; margin-right: 6px; font-size: 0.9rem; }
+        .nav-right { display: flex; gap: 12px; align-items: center; }
+        .icon-btn { 
+            background: var(--card); border: 1px solid var(--border); 
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--sky); cursor: pointer; transition: 0.2s;
+        }
+        .icon-btn:hover { background: var(--card-hover); }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Header Card */
+        .patient-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .patient-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--sky), var(--primary));
+        }
+        .p-info h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; color: var(--text); }
+        .p-info p { font-size: 0.9rem; color: var(--muted); }
+        .mrn-badge {
+            background: rgba(14,165,233,0.1); color: var(--sky);
+            padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-family: monospace; font-weight: 700;
+            margin-top: 10px; display: inline-block; border: 1px solid rgba(14,165,233,0.2);
+        }
+        .p-avatar {
+            width: 70px; height: 70px; border-radius: 20px; background: var(--sky);
+            display: flex; align-items: center; justify-content: center; font-size: 2rem;
+            box-shadow: 0 8px 20px rgba(14,165,233,0.3);
+        }
+        .q-badge {
+            position: absolute; top: 24px; left: 30px;
+            text-align: center;
+        }
+        .q-badge .num { font-size: 2rem; font-weight: 900; color: var(--primary); line-height: 1; }
+        .q-badge .lbl { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-box {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 20px; text-align: center; transition: 0.3s;
+        }
+        .stat-box:hover { border-color: var(--primary); background: var(--card-hover); }
+        .stat-icon { font-size: 1.5rem; margin-bottom: 12px; }
+        .stat-num { font-size: 1.8rem; font-weight: 900; color: var(--text); line-height: 1; margin-bottom: 4px; }
+        .stat-lbl { font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+
+        /* Tabs */
+        .tabs {
+            display: flex; gap: 10px; margin-bottom: 24px; background: var(--card); padding: 8px; border-radius: 16px; border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab {
+            flex: 1; padding: 12px 20px; text-align: center; border-radius: 12px; cursor: pointer;
+            font-size: 0.95rem; font-weight: 700; color: var(--muted); transition: 0.3s; white-space: nowrap;
+        }
+        .tab.active { background: var(--primary-l); color: var(--primary); }
+        .tab:not(.active):hover { color: var(--text); background: rgba(255,255,255,0.02); }
+
+        /* Journey Panel */
+        .journey-panel {
+            background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+            padding: 30px; position: relative;
+        }
+        .jp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .jp-title { font-size: 1.1rem; font-weight: 800; color: var(--text); }
+        .jp-badge { background: rgba(14,165,233,0.1); color: var(--sky); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+
+        /* Modern Timeline */
+        .timeline { display: flex; flex-direction: column; gap: 0; position: relative; }
+        .tl-item { display: flex; gap: 20px; position: relative; padding-bottom: 30px; }
+        .tl-item:last-child { padding-bottom: 0; }
+        
+        .tl-line { position: absolute; right: 15px; top: 35px; bottom: -5px; width: 2px; background: var(--border); z-index: 1; }
+        .tl-item:last-child .tl-line { display: none; }
+        .tl-item.done .tl-line { background: var(--primary); }
+        .tl-item.active .tl-line { background: var(--border); }
+
+        .tl-icon { 
+            width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center; z-index: 2; color: var(--muted); font-size: 12px;
+            position: relative; transition: 0.3s;
+        }
+        
+        /* State: Done */
+        .tl-item.done .tl-icon { background: var(--primary); border-color: var(--primary); color: #fff; }
+        /* State: Active */
+        .tl-item.active .tl-icon { background: var(--card); border-color: var(--primary); color: var(--primary); border-width: 3px; box-shadow: 0 0 0 4px var(--primary-l); }
+        
+        /* Pulse for active */
+        .tl-item.active .tl-icon::after {
+            content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--primary);
+            animation: pulseTL 2s infinite; opacity: 0;
+        }
+        @keyframes pulseTL { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+
+        .tl-content { flex: 1; padding-top: 5px; }
+        .tl-title { font-size: 1.05rem; font-weight: 800; color: var(--text); margin-bottom: 4px; transition: 0.3s; }
+        .tl-desc { font-size: 0.85rem; color: var(--muted); }
+        
+        .tl-item.active .tl-title { color: var(--primary); }
+        .tl-item:not(.active):not(.done) { opacity: 0.4; }
+
+        .tl-status-badge {
+            font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 700; margin-right: 10px;
+        }
+        .tl-item.done .tl-status-badge { background: rgba(16,185,129,0.1); color: var(--green); }
+        .tl-item.active .tl-status-badge { background: var(--primary-l); color: var(--primary); }
+
+        #loadingOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; padding-bottom: 5px; }
+            .patient-card { flex-direction: column; align-items: flex-start; gap: 20px; }
+            .q-badge { position: relative; top: 0; left: 0; text-align: right; border-top: 1px solid var(--border); padding-top: 15px; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+            .q-badge .lbl { margin-top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loadingOverlay">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:40px;margin-bottom:20px;color:var(--primary)"></i>
+        جاري الاتصال بالنظام...
+    </div>
+
+    <!-- Top Nav -->
+    <nav class="top-nav">
+        <div class="nav-right">
+            <button class="icon-btn" onclick="toggleTheme()" title="تغيير المظهر"><i class="fas fa-moon" id="themeIcon"></i></button>
+            <button class="icon-btn" onclick="window.close()" title="خروج"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="icon-btn" onclick="location.reload()" title="تحديث"><i class="fas fa-sync-alt"></i></button>
+        </div>
+        <div class="nav-logo">ARGON <span>بوابة المريض</span></div>
+    </nav>
+
+    <div class="container" id="mainContent" style="display:none">
+        
+        <!-- Header Card -->
+        <div class="patient-card">
+            <div style="display:flex;gap:20px;align-items:center">
+                <div class="p-info">
+                    <h1 id="pName">أهلاً، —</h1>
+                    <p id="cNameDate">العيادة</p>
+                    <div class="mrn-badge" id="pMrn">MRN-XXXXX</div>
+                </div>
+            </div>
+            <div class="p-avatar">🧑</div>
+            <div class="q-badge">
+                <div class="num" id="qNum">-</div>
+                <div class="lbl">رقم الدور الخاص بك</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-box" style="border-bottom: 3px solid var(--amber)">
+                <div class="stat-icon" style="color:var(--amber)"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div class="stat-num">0</div>
+                <div class="stat-lbl">فواتير معلقة</div>
+            </div>
+            <div class="stat-box" style="border-bottom: 3px solid var(--sky)">
+                <div class="stat-icon" style="color:var(--sky)"><i class="fas fa-clipboard-list"></i></div>
+                <div class="stat-num" id="statRx">0</div>
+                <div class="stat-lbl">وصفات نشطة</div>
+            </div>
+            <div class="stat-box" style="border-bottom: 3px solid var(--red)">
+                <div class="stat-icon" style="color:var(--red)"><i class="far fa-calendar-alt"></i></div>
+                <div class="stat-num">0</div>
+                <div class="stat-lbl">مواعيد قادمة</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active"><i class="fas fa-walking"></i> زيارة اليوم</div>
+            <div class="tab"><i class="far fa-calendar-check"></i> المواعيد</div>
+            <div class="tab"><i class="fas fa-vial"></i> النتائج</div>
+            <div class="tab"><i class="fas fa-receipt"></i> الفواتير</div>
+            <div class="tab"><i class="fas fa-pills"></i> الأدوية</div>
+        </div>
+
+        <!-- Journey Panel -->
+        <div class="journey-panel">
+            <div class="jp-head">
+                <div class="jp-title">مسار زيارة اليوم <i class="fas fa-route" style="color:var(--muted);margin-right:8px"></i></div>
+                <div class="jp-badge" id="stepCounter">خطوة 1 من 4</div>
+            </div>
+
+            <div class="timeline">
+                
+                <!-- Step 1: Reception -->
+                <div class="tl-item" id="ts-reception">
+                    <div class="tl-line"></div>
+                    <div class="tl-icon"><i class="fas fa-check"></i></div>
+                    <div class="tl-content">
+                        <div class="tl-title">تسجيل الدخول</div>
+                        <div class="tl-desc">تسجيل البيانات الأساسية <span class="tl-status-badge" id="tb-reception">مكتمل</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Waiting -->
+                <div class="tl-item" id="ts-waiting">
+                    <div class="tl-line"></div>
+                    <div class="tl-icon"><i class="fas fa-check"></i></div>
+                    <div class="tl-content">
+                        <div class="tl-title">انتظار في الاستقبال</div>
+                        <div class="tl-desc">بانتظار الدخول للطبيب <span class="tl-status-badge" id="tb-waiting">جاري الآن</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Doctor -->
+                <div class="tl-item" id="ts-doctor">
+                    <div class="tl-line" id="tline-doctor"></div>
+                    <div class="tl-icon"><i class="fas fa-check"></i></div>
+                    <div class="tl-content">
+                        <div class="tl-title">الكشف مع الطبيب</div>
+                        <div class="tl-desc" id="tdesc-doctor">المعاينة السريرية والتشخيص <span class="tl-status-badge" id="tb-doctor">بانتظار</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 4a: Lab (Dynamic) -->
+                <div class="tl-item" id="ts-lab" style="display:none">
+                    <div class="tl-line"></div>
+                    <div class="tl-icon"><i class="fas fa-check"></i></div>
+                    <div class="tl-content">
+                        <div class="tl-title">طلبات التحاليل (المختبر)</div>
+                        <div class="tl-desc" id="tdesc-lab">بانتظار سحب العينات <span class="tl-status-badge" id="tb-lab">بانتظار</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 4b: Radiology (Dynamic) -->
+                <div class="tl-item" id="ts-rad" style="display:none">
+                    <div class="tl-line"></div>
+                    <div class="tl-icon"><i class="fas fa-check"></i></div>
+                    <div class="tl-content">
+                        <div class="tl-title">صور الأشعة</div>
+                        <div class="tl-desc" id="tdesc-rad">بانتظار إجراء التصوير <span class="tl-status-badge" id="tb-rad">بانتظار</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 4c: Pharmacy (Dynamic) -->
+                <div class="tl-item" id="ts-phar" style="display:none">
+                    <div class="tl-line"></div>
+                    <div class="tl-icon"><i class="fas fa-check"></i></div>
+                    <div class="tl-content">
+                        <div class="tl-title">صرف الأدوية (الصيدلية)</div>
+                        <div class="tl-desc" id="tdesc-phar">استلام الوصفة الطبية <span class="tl-status-badge" id="tb-phar">بانتظار</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Done -->
+                <div class="tl-item" id="ts-done">
+                    <div class="tl-icon"><i class="fas fa-check"></i></div>
+                    <div class="tl-content">
+                        <div class="tl-title" style="margin-top:4px">اكتمال الزيارة</div>
+                        <div class="tl-desc">نتمنى لك السلامة الدائمة <span class="tl-status-badge" id="tb-done" style="display:none">مكتمل</span></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script>
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('argon_theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                icon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        function toggleTheme() {
+            const current = document.body.getAttribute('data-theme') || 'light';
+            const newTheme = current === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('argon_theme', newTheme);
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        initTheme();
+
+        const FC = {
+            apiKey: "AIzaSyCDT_H-1klxbtuVR5n5GOVHKlxcmvY_2GA",
+            authDomain: "clinica-system-e71b9.firebaseapp.com",
+            databaseURL: "https://clinica-system-e71b9-default-rtdb.firebaseio.com",
+            projectId: "clinica-system-e71b9",
+            storageBucket: "clinica-system-e71b9.firebasestorage.app",
+            messagingSenderId: "833103541884",
+            appId: "1:833103541884:web:f8ee6ca4b3d8400cf0fbf9"
+        };
+        firebase.initializeApp(FC);
+        const db = firebase.database();
+
+        const params = new URLSearchParams(window.location.search);
+        const CID = params.get('id');
+        const BOOKID = params.get('apt');
+        
+        let clinicSettings = null;
+        let isComplex = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!CID || !BOOKID) { showError('رابط غير صالح'); return; }
+            
+            try {
+                const s = await db.ref(`clinics/${CID}/settings`).once('value');
+                clinicSettings = s.val();
+                if (!clinicSettings) throw new Error('Clinic not found');
+                
+                isComplex = (clinicSettings.type === 'complex' || clinicSettings.mode === 'medical_complex');
+
+                const dateOpts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const today = new Date().toLocaleDateString('ar-EG', dateOpts);
+                document.getElementById('cNameDate').textContent = `${today} · ${clinicSettings.name || 'العيادة'}`;
+                
+                if (clinicSettings.color) {
+                    document.documentElement.style.setProperty('--primary', clinicSettings.color);
+                }
+
+                startTracking();
+
+            } catch (e) {
+                showError('تعذر الاتصال بالعيادة.');
+            }
+        });
+
+        function showError(msg) {
+            const ov = document.getElementById('loadingOverlay');
+            ov.innerHTML = `<i class="fas fa-exclamation-triangle" style="font-size:40px;color:var(--red);margin-bottom:20px"></i><div style="color:var(--text)">${msg}</div>`;
+        }
+
+        async function startTracking() {
+            db.ref(`clinics/${CID}/bookings/${BOOKID}`).on('value', snap => {
+                const bk = snap.val();
+                if (!bk) { showError('تم حذف الموعد أو غير موجود.'); return; }
+                
+                document.getElementById('pName').innerHTML = `أهلاً، ${bk.patName.split(' ')[0]} ${bk.patName.split(' ').pop()}`;
+                document.getElementById('qNum').textContent = bk.queueNumber ? String(bk.queueNumber).padStart(2, '0') : '-';
+                
+                // Fetch patient info for MRN and stats
+                if (bk.patPhone) {
+                    let patPhone = bk.patPhone.replace(/\D/g,'');
+                    if (patPhone.startsWith('962')) patPhone = patPhone.substring(3);
+                    if (patPhone.startsWith('0')) patPhone = patPhone.substring(1);
+                    
+                    db.ref(`clinics/${CID}/patients`).once('value', snap => {
+                        const pats = snap.val() || {};
+                        const matched = Object.values(pats).find(p => p.info && p.info.phone === patPhone);
+                        if (matched && matched.info && matched.info.mrn) {
+                            document.getElementById('pMrn').textContent = matched.info.mrn;
+                        } else {
+                            // Fallback to legacy structure
+                            db.ref(`clinics/${CID}/patients/${patPhone}/info`).once('value', ps => {
+                                if (ps.val() && ps.val().mrn) {
+                                    document.getElementById('pMrn').textContent = ps.val().mrn;
+                                }
+                            });
+                        }
+                    });
+                    
+                    // Simple stats calculation for active prescriptions (just an example based on rx array if it existed, here we mock it to 1 if completed)
+                    document.getElementById('statRx').textContent = (bk.status==='completed' || bk.status==='done') ? '1' : '0';
+                }
+
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+                updateJourney(bk);
+            });
+        }
+
+        function setStepState(id, state, text) {
+            const el = document.getElementById(id);
+            if(!el) return;
+            el.className = 'tl-item ' + state;
+            
+            const badge = document.getElementById(id.replace('ts-', 'tb-'));
+            if(badge) {
+                badge.style.display = 'inline-block';
+                badge.textContent = text;
+            }
+        }
+
+        function updateJourney(bk) {
+            // Reset all
+            ['ts-reception', 'ts-waiting', 'ts-doctor', 'ts-lab', 'ts-rad', 'ts-phar', 'ts-done'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.className = 'tl-item';
+                    const b = document.getElementById(id.replace('ts-', 'tb-'));
+                    if(b) b.style.display = 'none';
+                }
+            });
+
+            // Count total steps dynamically
+            let totalSteps = 4; // base: rec, wait, doc, done
+            
+            // Check flags inside booking for dynamic departments
+            const hasLab = bk.labStatus ? true : false;
+            const hasRad = bk.radStatus ? true : false;
+            const hasPhar = bk.pharStatus ? true : false;
+            
+            if (isComplex) {
+                if(hasLab) { document.getElementById('ts-lab').style.display = 'flex'; totalSteps++; }
+                if(hasRad) { document.getElementById('ts-rad').style.display = 'flex'; totalSteps++; }
+                if(hasPhar) { document.getElementById('ts-phar').style.display = 'flex'; totalSteps++; }
+            }
+
+            let currentStep = 1;
+
+            // 1. Reception
+            setStepState('ts-reception', 'done', 'مكتمل');
+            
+            // 2. Waiting
+            if (bk.status === 'waiting' || bk.status === 'new' || bk.status === 'confirmed') {
+                setStepState('ts-waiting', 'active', 'جاري الآن');
+                currentStep = 2;
+                document.getElementById('tdesc-doctor').innerHTML = `${bk.docName || 'الطبيب المختص'} <span class="tl-status-badge" id="tb-doctor">بانتظار</span>`;
+            } else {
+                setStepState('ts-waiting', 'done', 'مكتمل');
+            }
+
+            // 3. Doctor
+            if (bk.status === 'with_doctor') {
+                setStepState('ts-doctor', 'active', 'جاري الآن');
+                document.getElementById('tdesc-doctor').innerHTML = `${bk.docName || 'الطبيب المختص'} <span class="tl-status-badge" id="tb-doctor">جاري الآن</span>`;
+                currentStep = 3;
+            } else if (bk.status === 'done' || bk.status === 'completed' || bk.status === 'in_pharmacy' || bk.status === 'in_lab' || bk.status === 'in_radiology') {
+                setStepState('ts-doctor', 'done', 'مكتمل');
+                document.getElementById('tdesc-doctor').innerHTML = `${bk.docName || 'الطبيب المختص'} <span class="tl-status-badge" id="tb-doctor">مكتمل</span>`;
+            }
+
+            // 4. Dynamic Steps (Complex only)
+            if (isComplex) {
+                let dynamicActive = false;
+                
+                if (hasLab) {
+                    if (bk.labStatus === 'pending') {
+                        setStepState('ts-lab', 'active', 'جاري الآن');
+                        dynamicActive = true;
+                    } else if (bk.labStatus === 'completed') {
+                        setStepState('ts-lab', 'done', 'مكتمل');
+                    }
+                }
+                
+                if (hasRad) {
+                    if (bk.radStatus === 'pending') {
+                        if(!dynamicActive) { setStepState('ts-rad', 'active', 'جاري الآن'); dynamicActive = true; }
+                        else { setStepState('ts-rad', '', ''); document.getElementById('tb-rad').style.display='inline-block'; document.getElementById('tb-rad').textContent='بانتظار'; }
+                    } else if (bk.radStatus === 'completed') {
+                        setStepState('ts-rad', 'done', 'مكتمل');
+                    }
+                }
+                
+                if (hasPhar) {
+                    if (bk.pharStatus === 'pending') {
+                        if(!dynamicActive) { setStepState('ts-phar', 'active', 'جاري الآن'); dynamicActive = true; }
+                        else { setStepState('ts-phar', '', ''); document.getElementById('tb-phar').style.display='inline-block'; document.getElementById('tb-phar').textContent='بانتظار'; }
+                    } else if (bk.pharStatus === 'completed') {
+                        setStepState('ts-phar', 'done', 'مكتمل');
+                    }
+                }
+                
+                if (dynamicActive) {
+                    currentStep = totalSteps - 1; // Assuming it's the step before "done"
+                }
+            }
+
+            // 5. Done
+            if (bk.status === 'done' || bk.status === 'completed') {
+                // Verify all dynamic steps are done if they exist
+                let allDynDone = true;
+                if(hasLab && bk.labStatus !== 'completed') allDynDone = false;
+                if(hasRad && bk.radStatus !== 'completed') allDynDone = false;
+                if(hasPhar && bk.pharStatus !== 'completed') allDynDone = false;
+                
+                if (allDynDone) {
+                    setStepState('ts-done', 'done', 'مكتمل');
+                    currentStep = totalSteps;
+                }
+            }
+
+            // Update Counter
+            document.getElementById('stepCounter').textContent = `خطوة ${currentStep} من ${totalSteps}`;
+        }
+    </script>
+</body>
+</html>

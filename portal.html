@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#020813">
+  <title>ARGON MEDICAL OS | بوابة العيادات</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #0d9488;
+      --primary-glow: rgba(13, 148, 136, 0.5);
+      --secondary: #3b82f6;
+      --bg: #020813;
+      --panel: rgba(10, 18, 30, 0.6);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Tajawal', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Dynamic Abstract Background ── */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 0;
+      animation: float 20s infinite alternate;
+    }
+    .blob.teal {
+      width: 400px; height: 400px;
+      background: var(--primary);
+      top: -10%; right: -5%;
+      opacity: 0.15;
+    }
+    .blob.blue {
+      width: 500px; height: 500px;
+      background: var(--secondary);
+      bottom: -20%; left: -10%;
+      opacity: 0.1;
+      animation-delay: -5s;
+    }
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(50px, 50px) scale(1.1); }
+    }
+
+    /* ── Glass Container ── */
+    .glass-container {
+      position: relative;
+      z-index: 10;
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .brand-logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #2dd4bf, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+    .brand-tag {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 5px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 30px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+    .tab.active {
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrapper i {
+      position: absolute;
+      right: 16px;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+    .form-control {
+      width: 100%;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 14px 14px 14px 45px;
+      border-radius: 12px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1rem;
+      transition: all 0.3s;
+      outline: none;
+      box-sizing: border-box;
+    }
+    /* Reverse padding for Arabic dir=rtl */
+    [dir="rtl"] .form-control {
+      padding: 14px 45px 14px 14px;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      background: rgba(0,0,0,0.4);
+      box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+    }
+    .form-control:focus + i { color: var(--primary); }
+
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 8px 24px var(--primary-glow);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px var(--primary-glow);
+    }
+    .btn-submit:active { transform: translateY(0); }
+
+    /* ── Notifications ── */
+    #notif {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+    .n-err { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .n-ok { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+    
+    .spinner {
+      animation: spin 1s linear infinite;
+      display: none;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  </style>
+
+  <!-- Firebase Core -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  
+  <!-- Config & Auth Bridge -->
+  <script src="patch.js"></script> <!-- لتهيئة Firebase -->
+  <script src="argon-auth-bridge.js"></script>
+</head>
+
+<body>
+
+  <div class="blob teal"></div>
+  <div class="blob blue"></div>
+
+  <div class="glass-container">
+    <div class="brand">
+      <h1 class="brand-logo">ARGON OS</h1>
+      <div class="brand-tag">النظام الطبي السحابي الأذكى</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')" id="tab-login">تسجيل الدخول</div>
+      <div class="tab" onclick="switchTab('register')" id="tab-register">عيادة جديدة</div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="form-login">
+      <div class="form-group">
+        <label>البريد الإلكتروني الشخصي</label>
+        <div class="input-wrapper">
+          <input type="email" id="lEmail" class="form-control" placeholder="dr.name@example.com">
+          <i class="fas fa-envelope"></i>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <div class="input-wrapper">
+          <input type="password" id="lPass" class="form-control" placeholder="••••••••">
+          <i class="fas fa-lock"></i>
+        </div>
+      </div>
+      <button class="btn-submit" onclick="doLogin()">
+        <span>الدخول للعيادة</span>
+        <i class="fas fa-arrow-left"></i>
+        <i class="fas fa-circle-notch spinner" id="lSpin"></i>
+      </button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="form-register" style="display:none;">
+      <div class="form-group">
+        <label>اسم العيادة الطبي</label>
+        <div class="input-wrapper">
+          <input type="text" id="rClinicName" class="form-control" placeholder="مثال: عيادة النور لطب الأسنان">
+          <i class="fas fa-hospital"></i>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>البريد الإلكتروني الشخصي</label>
+        <div class="input-wrapper">
+          <input type="email" id="rEmail" class="form-control" placeholder="dr.name@example.com">
+          <i class="fas fa-envelope"></i>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور (6 أحرف على الأقل)</label>
+        <div class="input-wrapper">
+          <input type="password" id="rPass" class="form-control" placeholder="••••••••">
+          <i class="fas fa-lock"></i>
+        </div>
+      </div>
+      <button class="btn-submit" onclick="doRegister()">
+        <span>تأسيس العيادة مجاناً</span>
+        <i class="fas fa-rocket"></i>
+        <i class="fas fa-circle-notch spinner" id="rSpin"></i>
+      </button>
+    </div>
+
+    <div id="notif"></div>
+
+  </div>
+
+  <script>
+    // تهيئة الجسر الأمني
+    window.onload = () => {
+      ArgonAuthBridge.init(firebase, firebase.database());
+    };
+
+    function switchTab(tab) {
+      document.getElementById('tab-login').className = tab === 'login' ? 'tab active' : 'tab';
+      document.getElementById('tab-register').className = tab === 'register' ? 'tab active' : 'tab';
+      document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+      hideNotif();
+    }
+
+    function showNotif(msg, isErr) {
+      const n = document.getElementById('notif');
+      n.className = isErr ? 'n-err' : 'n-ok';
+      n.innerHTML = `<i class="fas ${isErr ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
+      n.style.display = 'block';
+    }
+
+    function hideNotif() {
+      document.getElementById('notif').style.display = 'none';
+    }
+
+    async function doLogin() {
+      const email = document.getElementById('lEmail').value.trim();
+      const pass = document.getElementById('lPass').value;
+      
+      if(!email || !pass) return showNotif('الرجاء إدخال البريد وكلمة المرور', true);
+      
+      const btnSpin = document.getElementById('lSpin');
+      btnSpin.style.display = 'inline-block';
+      hideNotif();
+
+      try {
+        const result = await ArgonAuthBridge.loginWithEmail(email, pass);
+        // الدخول ناجح → التوجيه إلى الاستقبال
+        sessionStorage.setItem('clinica_auth_' + result.clinicId, '1');
+        showNotif('تم الدخول بنجاح! جاري تحويلك...', false);
+        setTimeout(() => {
+          window.location.href = `dashboard.html#${result.clinicId}`;
+        }, 800);
+      } catch (e) {
+        showNotif(e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' ? 'البيانات غير صحيحة' : e.message, true);
+        btnSpin.style.display = 'none';
+      }
+    }
+
+    async function doRegister() {
+      const name = document.getElementById('rClinicName').value.trim();
+      const email = document.getElementById('rEmail').value.trim();
+      const pass = document.getElementById('rPass').value;
+
+      if(!name || !email || !pass) return showNotif('الرجاء تعبئة كافة الحقول', true);
+      if(pass.length < 6) return showNotif('كلمة المرور يجب أن تكون 6 أحرف على الأقل', true);
+
+      const btnSpin = document.getElementById('rSpin');
+      btnSpin.style.display = 'inline-block';
+      hideNotif();
+
+      try {
+        const result = await ArgonAuthBridge.registerNewClinic(name, email, pass);
+        // التسجيل ناجح → التوجيه الفوري
+        sessionStorage.setItem('clinica_auth_' + result.clinicId, '1');
+        showNotif('تم تأسيس العيادة بنجاح! مرحباً بك.', false);
+        setTimeout(() => {
+          window.location.href = `dashboard.html#${result.clinicId}`;
+        }, 1000);
+      } catch (e) {
+        let msg = 'حدث خطأ: ' + (e.message || e.code || e);
+        if(e.code === 'auth/email-already-in-use') msg = 'هذا البريد مستخدم مسبقاً، تفضل بتسجيل الدخول';
+        showNotif(msg, true);
+        btnSpin.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

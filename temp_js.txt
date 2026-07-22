@@ -1,0 +1,15 @@
+  const p = _patients[activePatientId];
+  const v = p.visits[vk];
+  if (!v || !v.prescriptions || v.prescriptions.length === 0) return;
+
+  const session = window.ArgonSession ? ArgonSession.get() || {} : {};
+  let clinicName = session.clinicName || 'العيادة الطبية';
+  if (typeof _settings !== 'undefined' && _settings.clinicName) clinicName = _settings.clinicName;
+
+  const cleanPhone = (str) => {
+    if (!str) return 'غير متوفر';
+    if (/[a-zA-Z]/.test(str) || str.length > 20) return 'غير متوفر';
+    return str;
+  };
+  const printPhone = p.info && p.info.phone && cleanPhone(p.info.phone) !== 'غير متوفر' ? cleanPhone(p.info.phone) : cleanPhone(activePatientId);
+

@@ -1,0 +1,4 @@
+Line 525: <button onclick="clrHist()" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);color:#fca5a5;padding:7px 13px;border-radius:8px;font-family:'Tajawal',sans-serif;font-size:.79rem;cursor:pointer;height:40px"><i class="fas fa-trash" style="margin-left:5px"></i>مسح</button>
+Line 852: <button onclick="if(confirm('هل أنت متأكد من تصفير ومسح جميع الفواتير والحركات المالية الحالية؟')) { db.ref(BASE + '/invoices').remove(); db.ref(BASE + '/financial_transactions').remove(); toast('تم تصفير الفواتير بنجاح', 'ok'); }" style="background:var(--red);color:white;border:none;padding:6px 10px;border-radius:6px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-trash"></i> مسح الفواتير التجريبية</button>
+Line 1197: histTitle: "السجل", clearHist: "مسح السجل",
+Line 2942: function clrHist(){if(!confirm('مسح سجل الحجوزات المكتملة؟'))return;db.ref(`${BASE}/completedBookings`).remove().then(()=>toast('تم المسح','ok'));}
