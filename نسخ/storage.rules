@@ -1,0 +1,120 @@
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║  ARGON MEDICAL OS v3.0 — Firebase Storage Security Rules                   ║
+// ║  قواعد أمان Firebase Storage — عزل تام للنسخ الاحتياطية السحابية         ║
+// ╠══════════════════════════════════════════════════════════════════════════════╣
+// ║  النشر: firebase deploy --only storage                                      ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ════════════════════════════════════════════════════════════
+    // القاعدة الجذرية — رفض كل شيء افتراضياً
+    // Deny-All default: أي مسار غير مذكور صراحةً = ممنوع تماماً
+    // ════════════════════════════════════════════════════════════
+    match /{everything=**} {
+      allow read, write: if false;
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // مسار النسخ الاحتياطية السحابية
+    // backups/{clinicId}/{fileName}
+    //
+    // سياسة العزل:
+    //   المستخدم يجب أن يكون:
+    //     1. مُصادقاً عليه (Firebase Auth — أنونيموس أو Email)
+    //     2. يرفع/يقرأ ملفاً داخل مجلد العيادة الصحيحة
+    //
+    // ⚠️ ملاحظة هندسية:
+    //   Firebase Storage Rules لا تستطيع الاستعلام عن RTDB مباشرةً.
+    //   للتحقق الكامل من ملكية العيادة نستخدم:
+    //     - التحقق من نوع الملف (JSON فقط)
+    //     - التحقق من الحجم (حد 50 MB)
+    //     - التحقق من الـ metadata (engineVer من ARGON)
+    //   للأمان المتقدم راجع التعليمات أدناه لتفعيل Custom Claims.
+    // ════════════════════════════════════════════════════════════
+    match /backups/{clinicId}/{fileName} {
+
+      // ── القراءة: مصادق عليه فقط ──
+      // يسمح لأي مستخدم Firebase Auth (بما في ذلك Anonymous) بالقراءة
+      // الأمان الإضافي: العزل يتم من جانب العميل (client-side clinicId check)
+      allow read: if request.auth != null
+                     && request.auth.uid != null;
+
+      // ── الكتابة (الرفع): مصادق + JSON + حجم معقول + metadata صالحة ──
+      allow write: if request.auth != null
+                      && request.auth.uid != null
+
+                      // التحقق من نوع المحتوى: JSON فقط
+                      && request.resource.contentType == 'application/json'
+
+                      // التحقق من الحجم: لا يتجاوز 50 MB
+                      && request.resource.size <= 50 * 1024 * 1024
+
+                      // التحقق من وجود metadata من ARGON Engine
+                      && request.resource.metadata != null
+                      && request.resource.metadata.get('clinicId', null) != null
+
+                      // التحقق من clinicId في الـ metadata يطابق مسار التخزين
+                      && request.resource.metadata.get('clinicId', '') == clinicId
+
+                      // التحقق من أن الملف صادر من ARGON Engine
+                      && request.resource.metadata.get('engine', '') == 'ArgonHybridBackupEngine';
+
+      // ── الحذف: مصادق عليه فقط ──
+      // يُستخدم في عملية تدوير النسخ القديمة (rotateCloudBackups)
+      allow delete: if request.auth != null
+                       && request.auth.uid != null;
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // مسار اللوغوهات والصور (إذا كانت تُرفع للـ Storage)
+    // logos/{clinicId}/{imageFile}
+    // ════════════════════════════════════════════════════════════
+    match /logos/{clinicId}/{imageFile} {
+
+      // ── القراءة العامة للصور ──
+      allow read: if request.auth != null;
+
+      // ── الكتابة: صور فقط + حجم لا يتجاوز 5 MB ──
+      allow write: if request.auth != null
+                      && (request.resource.contentType.matches('image/.*')
+                          || request.resource.contentType == 'application/octet-stream')
+                      && request.resource.size <= 5 * 1024 * 1024;
+
+      allow delete: if request.auth != null;
+    }
+
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 🔐 الترقية الأمنية المُوصى بها: Custom Claims
+// ════════════════════════════════════════════════════════════════════════════
+//
+// لتطبيق عزل كامل على مستوى الخادم (Server-Side Isolation):
+//
+// الخطوة 1: أنشئ Cloud Function تضع clinicId كـ Custom Claim:
+//
+//   exports.setClinicClaim = functions.https.onCall(async (data, context) => {
+//     if (!context.auth) throw new functions.https.HttpsError('unauthenticated', '...');
+//     const clinicId = data.clinicId;
+//     // تحقق من صلاحية المستخدم في RTDB...
+//     await admin.auth().setCustomUserClaims(context.auth.uid, { clinicId });
+//     return { success: true };
+//   });
+//
+// الخطوة 2: عدّل قاعدة الكتابة في هذا الملف لتكون:
+//
+//   allow write: if request.auth != null
+//                   && request.auth.token.clinicId == clinicId  // ← Custom Claim
+//                   && request.resource.contentType == 'application/json'
+//                   && request.resource.size <= 50 * 1024 * 1024;
+//
+// الخطوة 3: استدعِ الـ Cloud Function بعد نجاح doLogin() في dashboard.html:
+//   firebase.functions().httpsCallable('setClinicClaim')({ clinicId: CID });
+//
+// بعد هذا: Firebase نفسه يرفض أي طلب من عيادة لا تملك الـ claim الصحيح.
+// ════════════════════════════════════════════════════════════════════════════

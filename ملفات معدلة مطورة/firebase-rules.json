@@ -1,0 +1,153 @@
+{
+  "rules": {
+    "clinics": {
+      "$clinic_id": {
+
+        ".read":  "true",
+        ".write": "true",
+
+        "patients": {
+          "$patient_id": {
+            ".validate": "newData.hasChildren(['info'])",
+            "info": {
+              ".validate": "newData.hasChildren(['name'])",
+              "name":  { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length < 200" },
+              "phone": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length < 25)" },
+              "nationalId": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length < 20)" },
+              "mrn":   { ".validate": "!newData.exists() || newData.isString()" }
+            }
+          },
+          ".indexOn": ["info/nationalId", "info/phone"]
+        },
+
+        "bookings": {
+          "$booking_id": {
+            ".validate": "newData.hasChildren(['patName','docKey','date'])",
+            "patName":  { ".validate": "newData.isString() && newData.val().length < 200" },
+            "patPhone": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length < 25)" },
+            "fee":      { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)" }
+          },
+          ".indexOn": ["date", "status", "docKey", "patNationalId"]
+        },
+
+        "completedBookings": {
+          "$booking_id": {
+            ".write": "!data.exists() || newData.exists()"
+          },
+          ".indexOn": ["date", "docKey"]
+        },
+
+        "invoices": {
+          "$invoice_id": {
+            ".write": "!data.exists() || newData.exists()",
+            ".validate": "!newData.exists() || newData.hasChildren(['items','total'])",
+            "total": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)" },
+            "status": {
+              ".validate": "!newData.exists() || newData.val() === 'unpaid' || newData.val() === 'partial' || newData.val() === 'paid' || newData.val() === 'voided' || newData.val() === 'cancelled' || newData.val() === 'pending_review' || newData.val() === 'pending'"
+            }
+          },
+          ".indexOn": ["patientId", "visitId", "status", "invoiceType"]
+        },
+
+        "financial_transactions": {
+          "$tx_id": {
+            ".write": "!data.exists() || newData.exists()",
+            ".validate": "!newData.exists() || newData.hasChildren(['type','amount'])",
+            "amount": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() > 0)" },
+            "type":   { ".validate": "!newData.exists() || newData.val() === 'PAYMENT' || newData.val() === 'REVERSAL'" }
+          },
+          ".indexOn": ["patientId", "invoiceId", "timestamp"]
+        },
+
+        "audit_logs": {
+          "$log_id": {
+            ".write": "!data.exists()",
+            ".validate": "newData.hasChildren(['action','timestamp'])"
+          },
+          ".indexOn": ["action", "timestamp"]
+        },
+
+        "billing_refs": {
+          "$ref_id": {
+            ".write": "!data.exists()"
+          }
+        },
+
+        "billing_triggers": {
+          "$trigger_id": {
+            ".write": "true",
+            ".validate": "!newData.exists() || newData.hasChildren(['visitKey'])"
+          },
+          ".indexOn": ["processedAt", "visitKey"]
+        },
+
+        "ledger": {
+          "$ledger_entry_id": {
+            ".write": "!data.exists() || newData.exists()"
+          }
+        },
+
+        "pricing_catalog": {
+          "$item_id": {
+            ".validate": "!newData.exists() || newData.hasChildren(['name','type','price'])",
+            "price": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)" },
+            "name":  { ".validate": "!newData.exists() || (newData.isString() && newData.val().length > 0 && newData.val().length < 200)" },
+            "type":  { ".validate": "!newData.exists() || newData.val() === 'lab' || newData.val() === 'radiology' || newData.val() === 'pharmacy' || newData.val() === 'exam' || newData.val() === 'other'" }
+          }
+        },
+
+        "pharmacy_inventory": {
+          "$drug_id": {
+            ".validate": "!newData.exists() || newData.hasChildren(['name'])",
+            "name":  { ".validate": "!newData.exists() || (newData.isString() && newData.val().length > 0 && newData.val().length < 200)" },
+            "stock": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)" }
+          }
+        },
+
+        "lab_orders": {
+          "$order_id": {
+            ".validate": "!newData.exists() || newData.hasChildren(['patientId','requestedTests'])"
+          },
+          ".indexOn": ["patientId", "visitId", "status"]
+        },
+
+        "rad_orders": {
+          "$order_id": {
+            ".validate": "!newData.exists() || newData.hasChildren(['patientId'])"
+          },
+          ".indexOn": ["patientId", "visitId", "status"]
+        },
+
+        "prescriptions": {
+          "$rx_id": {
+            ".validate": "!newData.exists() || newData.hasChildren(['patientId'])"
+          },
+          ".indexOn": ["patientId", "visitId", "status"]
+        },
+
+        "doctors": {
+          "$doc_id": {
+            ".validate": "!newData.exists() || newData.hasChildren(['name'])",
+            "name": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length > 0 && newData.val().length < 200)" },
+            "fee":  { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)" }
+          }
+        },
+
+        "staff": {
+          "$staff_id": {
+            ".validate": "!newData.exists() || newData.hasChildren(['name','role'])",
+            "name": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length > 0 && newData.val().length < 200)" },
+            "role": {
+              ".validate": "!newData.exists() || newData.val() === 'reception' || newData.val() === 'nurse' || newData.val() === 'doctor_assistant' || newData.val() === 'accountant' || newData.val() === 'secretary' || newData.val() === 'admin' || newData.val() === 'data_entry' || newData.val() === 'it_support' || newData.val() === 'security' || newData.val() === 'cleaner' || newData.val() === 'driver' || newData.val() === 'pharmacist' || newData.val() === 'lab' || newData.val() === 'radiology' || newData.val() === 'head_nurse' || newData.val() === 'dept_manager' || newData.val() === 'medical_director' || newData.val() === 'sterilization' || newData.val() === 'physiotherapy' || newData.val() === 'nutrition'"
+            }
+          }
+        },
+
+        "settings": {
+          ".validate": "newData.hasChildren(['name'])"
+        }
+
+      }
+    }
+  }
+}

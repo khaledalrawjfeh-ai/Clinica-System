@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARGON | Smart Log Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050b14;--panel:#0f172a;--surf:#1e293b;--border:#334155;
+    --text:#f8fafc;--muted:#94a3b8;--teal:#0d9488;--sky:#0ea5e9;
+    --green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;min-height:100vh;direction:rtl;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(13,148,136,0.07),transparent);pointer-events:none;}
+
+  .topbar{height:56px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:100;}
+  .tlogo{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:600;letter-spacing:3px;color:var(--teal);}
+  .ttitle{font-size:.95rem;font-weight:800;color:var(--text);}
+  .tbadge{font-size:.7rem;padding:3px 10px;border-radius:20px;font-weight:700;}
+  .shadow-on{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25);}
+  .shadow-off{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.25);}
+  .tbtn{background:var(--surf);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'Tajawal',sans-serif;font-size:.79rem;cursor:pointer;transition:.2s;margin-right:auto;}
+  .tbtn:hover{border-color:rgba(13,148,136,.3);color:var(--text);}
+
+  .main{max-width:1100px;margin:0 auto;padding:28px 20px;}
+
+  /* Metrics */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:28px;}
+  .mc{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:16px;border-bottom:2px solid var(--mc-color,transparent);}
+  .mc-val{font-size:1.9rem;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--mc-color,var(--text));}
+  .mc-lbl{font-size:.72rem;color:var(--muted);margin-top:2px;}
+  .mc-sub{font-size:.65rem;color:var(--muted);margin-top:4px;font-weight:600;}
+
+  /* Filters */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+  .fbtn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:.79rem;font-weight:700;cursor:pointer;transition:.2s;}
+  .fbtn:hover,.fbtn.act{border-color:var(--teal);color:var(--teal);background:rgba(13,148,136,.08);}
+  .fbtn.act-exact{border-color:var(--green);color:var(--green);background:rgba(16,185,129,.08);}
+  .fbtn.act-strong{border-color:var(--sky);color:var(--sky);background:rgba(14,165,233,.08);}
+  .fbtn.act-possible{border-color:var(--amber);color:var(--amber);background:rgba(245,158,11,.08);}
+  .fbtn.act-new{border-color:var(--muted);color:var(--text);background:rgba(255,255,255,.04);}
+  .fbtn.act-dup{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.08);}
+  .search-wrap{margin-right:auto;display:flex;align-items:center;background:var(--surf);border:1px solid var(--border);border-radius:9px;padding:0 12px;height:36px;gap:8px;}
+  .search-wrap input{background:transparent;border:none;color:var(--text);font-family:'Tajawal',sans-serif;font-size:.84rem;outline:none;width:200px;}
+
+  /* Log Table */
+  .log-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .log-head{display:grid;grid-template-columns:130px 1fr 100px 70px 100px;gap:8px;padding:10px 16px;background:var(--surf);border-bottom:1px solid var(--border);font-size:.69rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+  .log-row{display:grid;grid-template-columns:130px 1fr 100px 70px 100px;gap:8px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.03);font-size:.82rem;align-items:center;transition:background .1s;cursor:default;}
+  .log-row:hover{background:rgba(255,255,255,.02);}
+  .log-row:last-child{border-bottom:none;}
+  .log-row.dup{background:rgba(245,158,11,.03);}
+
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:20px;}
+  .b-exact{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+  .b-strong{background:rgba(14,165,233,.1);color:var(--sky);border:1px solid rgba(14,165,233,.2);}
+  .b-possible{background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
+  .b-new{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border);}
+  .b-dup{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+
+  .conf-bar{height:3px;border-radius:2px;margin-top:4px;}
+
+  .time-cell{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted);}
+  .src-chip{font-size:.66rem;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--muted);}
+
+  .empty{text-align:center;padding:60px;color:var(--muted);}
+  .empty i{font-size:2.5rem;display:block;margin-bottom:14px;opacity:.15;}
+
+  /* Live indicator */
+  .live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 0 rgba(16,185,129,.4);animation:livePulse 2s infinite;}
+  @keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.7);}70%{box-shadow:0 0 0 8px rgba(16,185,129,0);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}}
+
+  /* Alert bar */
+  .alert-bar{display:none;align-items:center;gap:12px;padding:12px 18px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;margin-bottom:20px;font-size:.85rem;}
+  .alert-bar.show{display:flex;}
+  .alert-bar strong{color:var(--red);}
+
+  @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .log-row.new-entry{animation:fu .3s ease;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="tlogo">ARGON</span>
+  <span style="width:1px;height:18px;background:var(--border)"></span>
+  <span class="ttitle">🔍 Smart Log Monitor</span>
+  <span class="tbadge shadow-on" id="shadowBadge">Shadow Mode: ON</span>
+  <div style="display:flex;align-items:center;gap:6px;margin-right:auto;">
+    <div class="live-dot"></div>
+    <span style="font-size:.75rem;color:var(--green);font-weight:700">مباشر</span>
+  </div>
+  <button class="tbtn" id="btnScan" onclick="scanDatabaseForDuplicates()" style="margin-right:8px;background:rgba(14,165,233,.1);color:var(--sky);border-color:rgba(14,165,233,.3);">🔬 فحص السجلات القديمة</button>
+  <button class="tbtn" id="btnLive" onclick="returnToLiveMode()" style="margin-right:8px;display:none;background:rgba(16,185,129,.1);color:var(--green);border-color:rgba(16,185,129,.3);">🔴 رجوع للوضع المباشر</button>
+  <button class="tbtn" onclick="clearLogs()" style="margin-right:0;color:#fca5a5;background:rgba(239,68,68,.05);border-color:rgba(239,68,68,.2);">🗑️ مسح السجل</button>
+  <button class="tbtn" style="margin-right:8px" onclick="exportCSV()">📊 تصدير CSV</button>
+</div>
+
+<div class="main">
+
+  <!-- Alert: duplicates detected -->
+  <div class="alert-bar" id="alertBar">
+    <span style="font-size:1.2rem">⚠️</span>
+    <div><strong id="alertCount">0</strong> حالة مكررة كانت ستنشأ في النظام القديم — تم منعها بواسطة المحرك الذكي.</div>
+    <button onclick="document.getElementById('alertBar').classList.remove('show')" style="margin-right:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem">✕</button>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics" id="metricsGrid">
+    <div class="mc" style="--mc-color:var(--green)"><div class="mc-val" id="mExact">—</div><div class="mc-lbl">مطابقة مؤكدة (EXACT)</div><div class="mc-sub">رقم وطني متطابق</div></div>
+    <div class="mc" style="--mc-color:var(--sky)"><div class="mc-val" id="mStrong">—</div><div class="mc-lbl">مطابقة قوية (STRONG)</div><div class="mc-sub">هاتف + اسم متشابه</div></div>
+    <div class="mc" style="--mc-color:var(--amber)"><div class="mc-val" id="mPossible">—</div><div class="mc-lbl">محتاج مراجعة (POSSIBLE)</div><div class="mc-sub">هاتف + اسم مختلف</div></div>
+    <div class="mc" style="--mc-color:var(--muted)"><div class="mc-val" id="mNew">—</div><div class="mc-lbl">ملف جديد (NEW)</div><div class="mc-sub">لا يوجد تطابق</div></div>
+    <div class="mc" style="--mc-color:var(--red)"><div class="mc-val" id="mDup">—</div><div class="mc-lbl">مكرر كان سيُنشأ</div><div class="mc-sub">تم منعه في Shadow Mode</div></div>
+  </div>
+
+  <!-- Filters + Search -->
+  <div class="filters">
+    <button class="fbtn act" id="fAll" onclick="setFilter('all',this)">الكل</button>
+    <button class="fbtn" id="fExact" onclick="setFilter('EXACT',this)">✅ EXACT</button>
+    <button class="fbtn" id="fStrong" onclick="setFilter('STRONG',this)">🔵 STRONG</button>
+    <button class="fbtn" id="fPossible" onclick="setFilter('POSSIBLE',this)">⚠️ POSSIBLE</button>
+    <button class="fbtn" id="fNew" onclick="setFilter('NEW',this)">🆕 NEW</button>
+    <button class="fbtn" id="fDup" onclick="setFilter('dup',this)" style="color:var(--red);border-color:rgba(239,68,68,.3)">🔴 مكررات فقط</button>
+    <div class="search-wrap">
+      <span style="color:var(--muted);font-size:.85rem">🔎</span>
+      <input id="searchInput" oninput="renderTable()" placeholder="بحث باسم أو هاتف أو مصدر...">
+    </div>
+  </div>
+
+  <!-- Log Table -->
+  <div class="log-wrap">
+    <div class="log-head">
+      <span>الوقت</span>
+      <span>بيانات المريض القادم</span>
+      <span>القرار</span>
+      <span>الثقة</span>
+      <span>المصدر</span>
+    </div>
+    <div id="logBody">
+      <div class="empty"><i>📋</i><p>جاري الاتصال بقاعدة البيانات...</p></div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;font-size:.75rem;color:var(--muted);text-align:center">
+    يعرض آخر 5000 سجل · يتحدث تلقائياً كل ثانية
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script>
+/* ============================================================
+   ARGON Smart Log Monitor — PATCH v1.1
+   ------------------------------------------------------------
+   1) إزالة listener ميت (settings/shadowMode_arg) بلا أي تأثير
+   2) تصحيح نص "آخر 200 سجل" → "آخر 5000 سجل" ليطابق limitToLast
+   3) زر جديد "رجوع للوضع المباشر" بعد فحص السجلات القديمة —
+      يعيد تفعيل المراقبة المباشرة بدون ريفرش الصفحة
+   4) إصلاح باغ: دمج سجلات Audit Scan لنفس المريض/نفس اليوم كان
+      يُخفي ويُقلل عدد حالات التكرار الحقيقية (mDup + الجدول + CSV).
+      الآن سجلات الفحص الشامل مستثناة من الدمج، بينما دمج سجلات
+      المراقبة المباشرة (live triggers) بقي كما هو بدون تغيير.
+   لا تغييرات على مسارات Firebase أو منطق NID Gate أو بيانات المرضى.
+   ============================================================ */
+const FB = {
+  apiKey:"AIzaSyCDT_H-1klxbtuVR5n5GOVHKlxcmvY_2GA",
+  authDomain:"clinica-system-e71b9.firebaseapp.com",
+  databaseURL:"https://clinica-system-e71b9-default-rtdb.firebaseio.com",
+  projectId:"clinica-system-e71b9",
+  storageBucket:"clinica-system-e71b9.firebasestorage.app",
+  messagingSenderId:"833103541884",
+  appId:"1:833103541884:web:f8ee6ca4b3d8400cf0fbf9"
+};
+if (!firebase.apps.length) firebase.initializeApp(FB);
+const db = firebase.database();
+
+const uP = new URLSearchParams(window.location.search);
+let CID = uP.get('id') || localStorage.getItem('argon_id') || '1';
+const BASE = 'clinics/' + CID;
+
+let _logs = {};        // key → log entry
+let _filter = 'all';
+let _shadowMode = true;
+
+// ── تحديث شارة Shadow Mode من الإعدادات ──
+// FIX v1.1: تمت إزالة listener ميت كان يقرأ settings/shadowMode_arg بجسم فاضي (لا تأثير له)
+// نقرأ الـ flags من مسار مخصص إذا أردت مستقبلاً تغيير shadowMode بدون تعديل الكود
+db.ref(BASE + '/argon_config/shadowMode').on('value', snap => {
+  const val = snap.val();
+  if (val !== null) {
+    _shadowMode = !!val;
+    const badge = document.getElementById('shadowBadge');
+    if (_shadowMode) {
+      badge.className = 'tbadge shadow-on';
+      badge.textContent = 'Shadow Mode: ON';
+    } else {
+      badge.className = 'tbadge shadow-off';
+      badge.textContent = 'Shadow Mode: OFF — مفعّل';
+    }
+  }
+});
+
+// ── الاستماع للـ smart_log ──
+let isInit = true;
+function startLiveLogs() {
+  db.ref(BASE + '/smart_log').orderByKey().limitToLast(5000).on('child_added', snap => {
+    _logs[snap.key] = { _key: snap.key, ...snap.val() };
+    if (!isInit) renderTable(snap.key);
+    else renderTable();
+  });
+  db.ref(BASE + '/smart_log').once('value', () => {
+    setTimeout(() => { isInit = false; renderTable(); }, 300);
+  });
+  db.ref(BASE + '/smart_log').on('child_removed', snap => {
+    delete _logs[snap.key];
+    renderTable();
+  });
+}
+startLiveLogs();
+
+// ── فحص السجلات القديمة (Audit) ──
+async function scanDatabaseForDuplicates() {
+  const btn = document.getElementById('btnScan');
+  btn.textContent = '⏳ جاري الفحص...';
+  btn.disabled = true;
+
+  try {
+    const snap = await db.ref(BASE + '/patients').once('value');
+    const patientsData = snap.val() || {};
+    const patients = Object.entries(patientsData).map(([k, v]) => ({ id: k, ...v.info }));
+
+    const normalize = (str) => {
+        if (!str) return '';
+        let s = str.trim().toLowerCase();
+        s = s.replace(/أ|إ|آ/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/عبد ال/g, 'عبدال').replace(/ابو /g, 'ابو').replace(/\s+/g, ' ');
+        return s;
+    };
+    const cleanPhone = p => p ? p.replace(/\D/g, '') : '';
+
+    const auditLogs = [];
+    
+    // Pairwise comparison of all historical patients
+    for (let i = 0; i < patients.length; i++) {
+        const p1 = patients[i];
+        for (let j = i + 1; j < patients.length; j++) {
+            const p2 = patients[j];
+            
+            const n1 = normalize(p1.name);
+            const n2 = normalize(p2.name);
+            const ph1 = cleanPhone(p1.phone);
+            const ph2 = cleanPhone(p2.phone);
+            const nid1 = p1.nationalId;
+            const nid2 = p2.nationalId;
+
+            let result = null;
+            let conf = 0;
+            let reason = '';
+
+            const isSamePhone = ph1 && ph2 && ph1 === ph2;
+            const isSameName = n1 && n2 && n1 === n2;
+            const isSameNid = nid1 && nid2 && nid1 === nid2;
+
+            if (isSameNid) {
+                result = 'EXACT'; conf = 1.0; reason = 'تطابق الرقم الوطني';
+            } else if (isSameName && isSamePhone) {
+                result = 'EXACT'; conf = 0.98; reason = 'تطابق تام (الاسم والهاتف)';
+            } else if (isSamePhone && !isSameName) {
+                if (n1.includes(n2) || n2.includes(n1)) {
+                    result = 'STRONG'; conf = 0.85; reason = 'هاتف مطابق + جزء من الاسم';
+                } else {
+                    result = 'POSSIBLE'; conf = 0.6; reason = 'هاتف مطابق (اسم مختلف)';
+                }
+            } else if (isSameName && !isSamePhone) {
+                result = 'POSSIBLE'; conf = 0.65; reason = 'اسم مطابق (هاتف مختلف)';
+            }
+
+            if (result) {
+                auditLogs.push({
+                    timestamp: new Date(p1.createdAt || 0).getTime(),
+                    isoTime: p1.createdAt || new Date().toISOString(),
+                    source: 'فحص_قاعدة_البيانات',
+                    triggeredBy: 'Audit',
+                    incoming: { name: p1.name, phone: p1.phone },
+                    decision: { result, confidence: conf, reason, matchedName: p2.name },
+                    wouldHaveCreatedDuplicate: true
+                });
+            }
+        }
+    }
+
+    // إيقاف الاستماع المباشر
+    db.ref(BASE + '/smart_log').off();
+    // FIX v1.1: إظهار زر الرجوع للوضع المباشر (بدون هذا الزر كان المونيتور يبقى ميت بعد الفحص بلا أي طريقة رجوع غير الريفرش)
+    document.getElementById('btnLive').style.display = 'inline-block';
+    
+    _logs = {};
+    auditLogs.forEach((l, idx) => _logs['audit_'+idx] = l);
+    
+    // تفعيل فلتر الكل
+    _filter = 'all';
+    document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('act','act-exact','act-strong','act-possible','act-new','act-dup'));
+    document.getElementById('fAll').classList.add('act');
+
+    renderTable();
+    alert(`✅ اكتمل الفحص! تم العثور على ${auditLogs.length} تكرار محتمل في السجلات القديمة.`);
+
+  } catch (e) {
+    console.error(e);
+    alert('❌ حدث خطأ أثناء الفحص');
+  }
+
+  btn.textContent = '🔬 فحص السجلات القديمة';
+  btn.disabled = false;
+}
+
+// FIX v1.1: دالة جديدة — تتيح الرجوع للوضع المباشر بعد فحص السجلات القديمة بدون ريفرش الصفحة
+function returnToLiveMode() {
+  _logs = {};
+  isInit = true;
+  startLiveLogs();
+
+  document.getElementById('btnLive').style.display = 'none';
+  document.getElementById('alertBar').classList.remove('show');
+
+  _filter = 'all';
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('act','act-exact','act-strong','act-possible','act-new','act-dup'));
+  document.getElementById('fAll').classList.add('act');
+
+  renderTable();
+}
+
+function setFilter(f, btn) {
+  _filter = f;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('act','act-exact','act-strong','act-possible','act-new','act-dup'));
+  btn.classList.add('act');
+  if (f === 'EXACT') btn.classList.add('act-exact');
+  if (f === 'STRONG') btn.classList.add('act-strong');
+  if (f === 'POSSIBLE') btn.classList.add('act-possible');
+  if (f === 'NEW') btn.classList.add('act-new');
+  if (f === 'dup') btn.classList.add('act-dup');
+  renderTable();
+}
+
+function renderTable(newKey = null) {
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+
+  // ترتيب تنازلي
+  let entries = Object.values(_logs).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+// FIX v1.1: Deduplicate repetitive LIVE trigger logs for the same patient on the same day.
+// Audit Scan entries (source === 'فحص_قاعدة_البيانات') are EXCLUDED from this dedup:
+// each one represents a distinct duplicate-pair finding and must not be merged,
+// otherwise mDup/badges undercount and some duplicate pairs disappear from the table & CSV.
+let uniqueEntries = [];
+let seenKeys = new Set();
+entries.forEach(e => {
+    if (e.source === 'فحص_قاعدة_البيانات') { uniqueEntries.push(e); return; }
+    const name = e.incoming?.name || '';
+    const dateStr = e.timestamp ? new Date(e.timestamp).toDateString() : '';
+    const key = name + '_' + dateStr;
+    if (!name || !seenKeys.has(key)) {
+        uniqueEntries.push(e);
+        if (name) seenKeys.add(key);
+    }
+});
+entries = uniqueEntries;
+
+  // حساب المقاييس
+  let exact=0, strong=0, possible=0, newC=0, dup=0;
+  entries.forEach(e => {
+    const r = e.decision?.result;
+    if (r === 'EXACT')    exact++;
+    else if (r === 'STRONG')   strong++;
+    else if (r === 'POSSIBLE') possible++;
+    else if (r === 'NEW')      newC++;
+    if (e.wouldHaveCreatedDuplicate) dup++;
+  });
+
+  document.getElementById('mExact').textContent    = exact;
+  document.getElementById('mStrong').textContent   = strong;
+  document.getElementById('mPossible').textContent = possible;
+  document.getElementById('mNew').textContent      = newC;
+  document.getElementById('mDup').textContent      = dup;
+
+  // Alert bar
+  if (dup > 0) {
+    document.getElementById('alertBar').classList.add('show');
+    document.getElementById('alertCount').textContent = dup;
+  }
+
+  // فلترة
+  if (_filter !== 'all') {
+    if (_filter === 'dup') entries = entries.filter(e => e.wouldHaveCreatedDuplicate);
+    else entries = entries.filter(e => e.decision?.result === _filter);
+  }
+
+  // بحث
+  if (q) {
+    entries = entries.filter(e => {
+      const inc = e.incoming || {};
+      return (inc.name||'').toLowerCase().includes(q)
+        || (inc.phone||'').includes(q)
+        || (e.source||'').toLowerCase().includes(q)
+        || (e.triggeredBy||'').toLowerCase().includes(q)
+        || (e.decision?.reason||'').toLowerCase().includes(q);
+    });
+  }
+
+  const body = document.getElementById('logBody');
+
+  if (!entries.length) {
+    body.innerHTML = `<div class="empty"><i>🔍</i><p>${Object.keys(_logs).length === 0 ? 'لا توجد سجلات بعد. شغّل النظام وافتح ملف مريض.' : 'لا توجد نتائج تطابق الفلتر أو البحث.'}</p></div>`;
+    return;
+  }
+
+  body.innerHTML = entries.map(e => {
+    const d  = e.decision || {};
+    const inc = e.incoming || {};
+    const r  = d.result || 'NEW';
+    const isNew  = e._key === newKey;
+    const isDup  = !!e.wouldHaveCreatedDuplicate;
+
+    const badgeMap = {
+      EXACT:    '<span class="badge b-exact">✅ EXACT</span>',
+      STRONG:   '<span class="badge b-strong">🔵 STRONG</span>',
+      POSSIBLE: '<span class="badge b-possible">⚠️ POSSIBLE</span>',
+      NEW:      '<span class="badge b-new">🆕 NEW</span>',
+    };
+
+    const confPct = Math.round((d.confidence || 0) * 100);
+    const confColor = r === 'EXACT' ? 'var(--green)' : r === 'STRONG' ? 'var(--sky)' : r === 'POSSIBLE' ? 'var(--amber)' : 'var(--muted)';
+
+    const srcMap = {
+      'doctor_waiting_room':      '🩺 طبيب — انتظار',
+      'reception_link_booking':   '🏥 استقبال — ربط',
+      'reception_booking_complete':'🏥 استقبال — إتمام',
+      'reception_complete_booking':'🏥 استقبال — إتمام',
+      'reception_manual':         '🏥 استقبال — يدوي',
+    };
+    const srcLabel = srcMap[e.source] || (e.source || 'غير محدد');
+
+    const dt = e.isoTime ? new Date(e.isoTime) : new Date(e.timestamp || 0);
+    const timeStr = dt.toLocaleTimeString('ar-JO', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const dateStr = dt.toLocaleDateString('ar-JO', {month:'short',day:'numeric'});
+
+    return `<div class="log-row ${isDup ? 'dup' : ''} ${isNew ? 'new-entry' : ''}">
+      <div class="time-cell">${timeStr}<br><span style="font-size:.65rem;opacity:.6">${dateStr}</span></div>
+      <div>
+        <div style="font-weight:800;font-size:.88rem">${esc(inc.name || '—')}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted);direction:ltr;margin-top:1px">${esc(inc.phone || '')}</div>
+        ${isDup ? '<span class="badge b-dup" style="margin-top:4px;display:inline-flex">🔴 كان سيتكرر</span>' : ''}
+        ${d.matchedName ? `<div style="font-size:.72rem;color:var(--muted);margin-top:3px">← ${esc(d.matchedName)}</div>` : ''}
+      </div>
+      <div>
+        ${badgeMap[r] || badgeMap['NEW']}
+        <div style="font-size:.7rem;color:var(--muted);margin-top:4px;line-height:1.3">${esc(d.reason || '')}</div>
+      </div>
+      <div>
+        <div style="font-weight:800;color:${confColor};font-family:'IBM Plex Mono',monospace">${confPct}%</div>
+        <div class="conf-bar" style="background:${confColor};width:${confPct}%;max-width:60px;opacity:.5"></div>
+      </div>
+      <div>
+        <div class="src-chip">${srcLabel}</div>
+        <div style="font-size:.67rem;color:var(--muted);margin-top:4px">${esc(e.triggeredBy || '')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s||'').replace(/[<>"'&]/g, c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c]));
+}
+
+function clearLogs() {
+  if (!confirm('هل أنت متأكد من مسح جميع سجلات smart_log؟ هذا لا يؤثر على بيانات المرضى.')) return;
+  db.ref(BASE + '/smart_log').remove().then(() => {
+    _logs = {};
+    renderTable();
+  });
+}
+
+function exportCSV() {
+  const rows = [['الوقت', 'اسم المريض', 'الهاتف', 'القرار', 'الثقة', 'سبب القرار', 'المصدر', 'مكرر؟']];
+  
+  let entries = Object.values(_logs).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  // FIX v1.1: نفس استثناء سجلات Audit Scan من الدمج (راجع نفس التعليق في renderTable)
+  let uniqueEntries = [];
+  let seenKeys = new Set();
+  entries.forEach(e => {
+      if (e.source === 'فحص_قاعدة_البيانات') { uniqueEntries.push(e); return; }
+      const name = e.incoming?.name || '';
+      const dateStr = e.timestamp ? new Date(e.timestamp).toDateString() : '';
+      const key = name + '_' + dateStr;
+      if (!name || !seenKeys.has(key)) {
+          uniqueEntries.push(e);
+          if (name) seenKeys.add(key);
+      }
+  });
+
+  uniqueEntries.forEach(e => {
+    const d = e.decision||{};
+    const inc = e.incoming||{};
+    const phone = inc.phone ? '="' + inc.phone + '"' : ''; 
+    const dateStr = e.timestamp ? new Date(e.timestamp).toLocaleString('ar-JO') : (e.isoTime||'');
+    const isDup = e.wouldHaveCreatedDuplicate ? 'نعم (تم منعه)' : 'لا';
+    
+    let sourceStr = e.source||'';
+    if(sourceStr.includes('reception')) sourceStr = 'الاستقبال';
+    else if(sourceStr.includes('doctor')) sourceStr = 'الطبيب';
+
+    rows.push([
+      dateStr,
+      inc.name||'',
+      phone,
+      d.result||'',
+      Math.round((d.confidence||0)*100)+'%',
+      (d.reason||'').replace(/,/g,'،'),
+      sourceStr,
+      isDup
+    ]);
+  });
+  
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `smart_log_professional_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>

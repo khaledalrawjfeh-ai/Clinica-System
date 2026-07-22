@@ -1,0 +1,48 @@
+{
+  "rules": {
+    "clinics": {
+      "$clinic_id": {
+        // By default, allow read/write for the clinic level
+        ".read": "true",
+        ".write": "true",
+
+        // FINANCIAL PROTECTIONS (Strict No-Delete Policy)
+        "invoices": {
+          "$invoice_id": {
+            // Allows creation and updating, but strictly prevents deletion of any invoice.
+            // newData.exists() ensures that the new data is not null (which means deletion).
+            ".write": "!data.exists() || newData.exists()"
+          }
+        },
+        "audit_logs": {
+          "$log_id": {
+            // Audit logs are append-only. Once written, they cannot be modified or deleted.
+            ".write": "!data.exists()"
+          }
+        },
+        "billing_refs": {
+          "$ref_id": {
+            ".write": "!data.exists()"
+          }
+        },
+        "ledger": {
+          "$ledger_entry_id": {
+            ".write": "!data.exists() || newData.exists()"
+          }
+        },
+        "financial_transactions": {
+          "$tx_id": {
+            ".write": "!data.exists() || newData.exists()"
+          }
+        },
+        
+        // Ensure that completed bookings (which represent history) cannot be deleted.
+        "completedBookings": {
+           "$booking_id": {
+              ".write": "!data.exists() || newData.exists()"
+           }
+        }
+      }
+    }
+  }
+}
