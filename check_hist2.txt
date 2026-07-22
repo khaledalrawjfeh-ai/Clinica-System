@@ -1,0 +1,15 @@
+    <div id="hist" class="sec">
+      <div class="ph" style="flex-wrap:wrap;gap:10px">
+        <div><div class="pt">📜 السجل</div><div class="ps">جميع الحجوزات المنجزة</div></div>
+        <div style="flex:1;min-width:200px;display:flex;align-items:center;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:0 12px;height:40px;box-shadow:0 4px 10px rgba(0,0,0,0.05)">
+          <i class="fas fa-search" style="color:var(--muted);margin-right:8px"></i>
+          <input type="text" id="histSearch" oninput="renderHist()" placeholder="بحث فوري برقم الهاتف، الاسم، أو الحجز..." style="border:none;background:transparent;color:var(--text);width:100%;font-size:0.85rem;outline:none" autocomplete="off">
+        </div>
+        <button onclick="window.open('smart-log.html?id='+CID,'_blank')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--amber);padding:7px 13px;border-radius:8px;font-family:'Tajawal',sans-serif;font-size:.79rem;cursor:pointer;height:40px;display:flex;align-items:center;gap:6px;font-weight:bold"><i class="fas fa-brain"></i>سجل الذكاء الاصطناعي</button>
+        <button onclick="clrHist()" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);color:#fca5a5;padding:7px 13px;border-radius:8px;font-family:'Tajawal',sans-serif;font-size:.79rem;cursor:pointer;height:40px"><i class="fas fa-trash" style="margin-left:5px"></i>مسح</button>
+      </div>
+      <div id="histGrid"></div>
+    </div>
+
+    <!-- DOCTORS -->
+    <div id="docs" class="sec">

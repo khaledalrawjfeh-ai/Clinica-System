@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#030b0a">
+  <link rel="manifest" href="/manifest-clinic.json">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <title>ARGON | لوحة التحكم</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root{
+      --bg:#f8fafc;--panel:#ffffff;--surf:#f1f5f9;--border:#e2e8f0;
+      --text:#0f172a;--muted:#64748b;--teal:#0d9488;--sky:#0ea5e9;
+      --amber:#d97706;--red:#ef4444;--green:#10b981;--purple:#8b5cf6;
+      --radius-lg:16px;--shadow-sm:0 1px 3px rgba(0,0,0,0.1);
+      --void:#030b0a;
+    }
+    [data-theme="dark"]{
+      --bg:#050b14;--panel:#0f172a;--surf:#1e293b;--border:#334155;
+      --text:#f8fafc;--muted:#94a3b8;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;margin:0;direction:rtl;transition:background 0.3s, color 0.3s;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    b, strong { font-weight: 800; color: var(--text); }
+    .sv { font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
+    .bname { color: var(--text); font-weight: 800; }
+    .ni.on{background:rgba(13,148,136,.1);color:var(--teal)}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(13,148,136,0.06),transparent 70%);pointer-events:none;z-index:0}
+
+    /* LTR fixes */
+    [dir="ltr"] .tr{flex-direction:row-reverse}
+    [dir="ltr"] .tbadge{flex-direction:row-reverse}
+
+    /* ── LOGIN ── */
+    #dashLogin{position:fixed;inset:0;background:var(--void);z-index:9999;display:flex;align-items:center;just
+<truncated 45216 bytes>
+>
+          </div>
+          <div><label class="mfl">رقم الهاتف</label><input type="text" id="sftP" class="mfi" placeholder="اختياري"></div>
+          <div><label class="mfl">إيموجي</label><input type="text" id="sftE" class="mfi" value="👤"></div>
+        </div>
+        <div class="addrow2" style="margin-top:8px; align-items:flex-end;">
+          <div><label class="mfl">الرقم الوطني</label><input type="text" id="sftNatId" class="mfi" placeholder="اختياري"></div>
+          <!-- Password removed -->
+          <button class="badd" id="btnStaffAdd" onclick="addStaff()"><i class="fas fa-plus" style="margin-left:4px"></i>إضافة موظف</button>
+          <button class="badd" id="btnCancelStaffEdit" onclick="cancelStaffEdit()" style="display:none;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3)"><i class="fas fa-times" style="margin-left:4px"></i>تراجع</button>
+        </div>
+      </div>
+      <div class="dgrid2" id="staffGrid"></div>
+    </div>
+
+    <!-- BILLING DASHBOARD -->
+    <div id="billing" class="sec">
+      <div class="ph"><div><div class="pt">💰 الحسابات والفوترة</div><div class="ps">إدارة الرسوم والذمم المالية والمدفوعات</div></div></div>
+      
+      <!-- KPI Overview -->
+      <div class="sgrid">
+        <div class="scard" style="--bc:var(--teal)">
+          <div class="scard-top">
+            <div class="sci" style="background:rgba(13,148,136,.1);color:var(--teal)"><i class="fas fa-coins"></i></div>
+          </div>
+          <div class="slb">إجمالي المقبوضات</div>
+          <div class="sv" id="blTotalPaid" style="color:var(--teal)">0.00</div>
+          <div class="scard-sub">دينار أردني</div>
+        </div>
+        <div class="scard" style="--bc:var(--amber)">
+          <div class="scar
+<truncated 130703 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.

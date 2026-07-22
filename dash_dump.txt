@@ -1,0 +1,320 @@
+851:               <button class="complex-only" onclick="sw('pricing',document.getElementById('mPricing'))" style="flex:1;background:rgba(14,165,233,.1);color:var(--sky);border:1px solid rgba(14,165,233,.2);padding:6px 10px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-weight:bold"><i class="fas fa-tags"></i> إدارة تسعيرة الفحوصات</button>
+852:               <button onclick="if(confirm('هل أنت متأكد من تصفير ومسح جميع الفواتير والحركات المالية الحالية؟')) { db.ref(BASE + '/invoices').remove(); db.ref(BASE + '/financial_transactions').remove(); toast('تم تصفير الفواتير بنجاح', 'ok'); }" style="background:var(--red);color:white;border:none;padding:6px 10px;border-radius:6px;font-size:0.75rem;cursor:pointer;"><i class="fas fa-trash"></i> مسح الفواتير التجريبية</button>
+853:             </div>
+854:           </div>
+855:           <div style="display:none;">
+856:             <label class="setl">نظام التشغيل (Operational Mode) *</label>
+857:             <select id="sMode" class="setsel" disabled style="opacity: 0.7; cursor: not-allowed; background: rgba(0,0,0,0.15);">
+858:               <option value="single_clinic">عيادة منفردة (Single Clinic) 🏥</option>
+859:               <option value="medical_complex">مجمع طبي متكامل (Medical Complex) 🏢</option>
+860:             </select>
+861:             <span style="font-size:0.75rem;color:var(--muted);margin-top:4px;display:block;"><i class="fas fa-lock" style="color:var(--teal)"></i> يتم التحكم بنوع رخصة التشغيل حصرياً من شاشة السوبر أدمن.</span>
+862:           </div>
+863:           <div>
+864:             <label class="setl">لغة لوحة التحكم (Language)</label>
+865:             <select id="sLang" class="setsel" onchange="setDashLang(this.value)">
+866:               <option value="ar">العربية (Arabic)</option>
+867:               <option value="en">English (الإنجليزية)</option>
+868:               <option value="fr">Français (الفرنسية)</option>
+869:             </select>
+870:           </div>
+871:         </div>
+872:         <div class="setg" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+873:           <div><label class="setl">الحالة</label>
+874:             <select id="sSt" class="setsel">
+875:               <option value="open">مفتوحة للعمل ✅</option>
+876:               <option value="closed">إيقاف استقبال الحجوزات ⏸️</option>
+877:             </select>
+878:           </div>
+879:           <div>
+880:             <label class="setl" style="display:flex;justify-content:space-between;align-items:center">
+881:               <span>أوقات الدوام</span>
+882:               <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--teal);font-weight:700">
+883:                 <input type="checkbox" id="s24h" onchange="document.getElementById('timeInputs').style.opacity=this.checked?'0.3':'1';document.getElementById('timeInputs').style.pointerEvents=this.checked?'none':'auto'">
+884:                 24 ساعة
+885:               </label>
+886:             </label>
+887:             <div id="timeInputs" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;transition:.3s">
+888:               <input type="time" id="sWs" class="seti" value="09:00" title="ساعة البدء">
+889:               <input type="time" id="sWe" class="seti" value="22:00" title="ساعة الانتهاء">
+890:             </div>
+891:           </div>
+892:         </div>
+893:         <div class="setg"><label class="setl">التخصص العام</label><input type="text" id="sSpec" class="seti" placeholder="عيادة متعددة التخصصات"></div>
+894:         <div class="setg" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+895:           <div><label class="setl">حجز نفس اليوم</label>
+896:             <select id="sSameDay" class="setsel">
+897:               <option value="true">مسموح ✅</option>
+898:               <option value="false">ممنوع ❌</option>
+899:             </select>
+900:           </div>
+901:           <div><label class="setl">أيام المواعيد المرئية</label><input type="number" id="sBookingDays" class="seti" value="10" min="1" max="30"></div>
+902:         </div>
+903:         <div class="setg">
+904:           <label class="setl">لون العيادة</label>
+905:           <div style="display:flex;align-items:center;gap:12px">
+906:             <input type="color" id="sC" style="width:42px;height:42px;border-radius:9px;border:2px solid var(--border);cursor:pointer" onchange="onColor(this.value)">
+907:             <span id="colorHex" style="font-size:.88rem;font-weight:600">#0d9488</span>
+908:           </div>
+909:         </div>
+910:         <div class="setg">
+911:           <label class="setl">شعار العيادة (لوغو)</label>
+912:           <div style="display:flex;align-items:center;gap:12px">
+913:             <div id="logoPrev" style="width:50px;height:50px;border-radius:10px;background:var(--surf);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.5rem">🏥</div>
+914:             <label class="tbtn" style="background:var(--teal);color:#fff;border:none">
+915:               <i class="fas fa-upload"></i> رفع لوغو
+916:               <input type="file" id="logoInp" hidden accept="image/*" onchange="upLogo(this)">
+917:             </label>
+918:             <button class="tbtn" onclick="delLogo()" style="color:var(--red);background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.2)">حذف</button>
+919:           </div>
+920:         </div>
+921:         <div class="setg"><label class="setl">إيموجي العيادة (بديل اللوغو)</label><input type="text" id="sEm" class="seti" placeholder="🏥"></div>
+922:         <div class="setg">
+923:           <label class="setl">كلمة المرور الحالية (مطلوبة للتغيير)</label>
+924:           <input type="password" id="sPwCurrent" class="seti" placeholder="أدخل كلمة المرور الحالية">
+925:         </div>
+926:         <div class="setg"><label class="setl">كلمة المرور الجديدة</label><input type="password" id="sPw" class="seti" placeholder="اتركها فارغة للإبقاء على الحالية"></div>
+927:         
+928:         <!-- PATIENT PORTAL LINK COPIER -->
+929:         <div class="setg" style="margin-top:14px;border-top:1px dashed var(--border);padding-top:14px">
+930:           <label class="setl" style="color:var(--teal);font-weight:800"><i class="fas fa-link"></i> رابط بوابة المريض الرقمية (Patient Portal)</label>
+931:           <div style="display:flex;gap:8px">
+932:             <input type="text" id="patPortalLinkUrl" class="seti" readonly style="text-align:left;direction:ltr" value="...">
+933:             <button class="tbtn" onclick="copyPatPortalUrl()" type="button" style="background:var(--teal);color:#fff;border:none"><i class="fas fa-copy"></i> نسخ الرابط</button>
+934:           </div>
+935:         </div>
+936:         
+937:         <!-- DEPARTMENTS PANEL -->
+938:         <div id="deptsPanel" style="display:none;margin:20px 0 14px 0;border-top:1px dashed var(--border);padding-top:16px">
+939:           <label class="setl" style="color:var(--teal);font-weight:800"><i class="fas fa-network-wired"></i> إدارة أقسام المجمع الطبي</label>
+940:           <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:12px;align-items:end">
+941:             <div><label class="mfl">اسم القسم *</label><input type="text" id="depN" class="mfi" placeholder="مثال: قسم الأسنان"></div>
+942:             <div><label class="mfl">إيموجي القسم *</label><input type="text" id="depI" class="mfi" placeholder="🦷"></div>
+943:             <div><label class="mfl">لون القسم</label><input type="color" id="depC" style="width:100%;height:38px;border-radius:9px;border:1px solid var(--border);cursor:pointer;padding:0;background:none" value="#0d9488"></div>
+944:             <button class="badd" type="button" onclick="addDept()" style="padding:9px 12px"><i class="fas fa-plus"></i></button>
+945:           </div>
+946:           <div id="deptsGrid" style="display:grid;grid-template-columns:1fr;gap:6px;max-height:220px;overflow-y:auto;background:rgba(255,255,255,0.01);border:1px solid var(--border);border-radius:10px;padding:8px">
+947:             <!-- Rendered Dynamically -->
+948:           </div>
+949:         </div>
+950:         
+951:         <!-- RBAC PASSWORDS PANEL -->
+952:         <div style="margin:20px 0 14px 0;border-top:1px dashed var(--border);padding-top:16px">
+953:           <label class="setl" style="color:var(--sky);font-weight:800"><i class="fas fa-user-shield"></i> كلمات مرور الطاقم الطبي وصلاحيات الوصول (RBAC)</label>
+954:           <div style="margin-top:10px; background: rgba(15,23,42,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 15px; position: relative;">
+955:             <div id="rbacLockOverlay" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px); border-radius: 12px; display: flex; align-items: center; justify-content: center; z-index: 10;">
+956:                 <button onclick="unlockRbacPasswords()" class="btn btn-teal" style="padding: 10px 20px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white;"><i class="fas fa-unlock"></i> إظهار وتعديل كلمات مرور الأقسام</button>
+957:             </div>
+958:             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+959:               <div>
+960:                 <label class="mfl">كلمة مرور الأطباء (EMR)</label>
+961:                 <input type="password" id="sPassDoc" class="mfi" placeholder="الافتراضية: نفس كلمة مرور العيادة">
+962:               </div>
+963:               <!-- Complex Only Passwords -->
+964:               <div id="complexPasscodes" style="display:none; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 12px;">
+965:                 <div>
+966:                   <label class="mfl">بوابة الصيدلية (Pharmacy)</label>
+967:                   <input type="password" id="sPassPhar" class="mfi" placeholder="تم التشفير. أدخل جديد للتغيير" disabled>
+968:                 </div>
+969:                 <div>
+970:                   <label class="mfl">بوابة المختبر (Lab)</label>
+971:                   <input type="password" id="sPassLab" class="mfi" placeholder="تم التشفير. أدخل جديد للتغيير" disabled>
+972:                 </div>
+973:                 <div>
+974:                   <label class="mfl">بوابة الأشعة (Radiology)</label>
+975:                   <input type="password" id="sPassRad" class="mfi" placeholder="تم التشفير. أدخل جديد للتغيير" disabled>
+976:                 </div>
+977:                 <div>
+978:                   <label class="mfl">بوابة الاستقبال (Reception)</label>
+979:                   <input type="password" id="sPassRec" class="mfi" placeholder="تم التشفير. أدخل جديد للتغيير" disabled>
+980:                 </div>
+981:               </div>
+982:             </div>
+983:           </div>
+984:         </div>
+985: 
+986:         <!-- WHATSAPP AUTOMATION PANEL -->
+987:         <div style="margin:20px 0 14px 0;border-top:1px dashed var(--border);padding-top:16px">
+988:           <label class="setl" style="color:#25D366;font-weight:800"><i class="fab fa-whatsapp"></i> مركز أتمتة الواتساب (WhatsApp Automation)</label>
+989:           <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px;background:rgba(37,211,102,0.03);border:1px solid rgba(37,211,102,0.2);padding:15px;border-radius:12px">
+990:             
+991:             <div style="text-align:center; padding: 20px 10px;">
+992:                 <div style="font-size: 1.8rem; margin-bottom: 12px;">🚧</div>
+993:                 <div style="color:#25D366; font-weight: 700; font-size: 1.1rem; margin-bottom: 8px;">خدمة الواتساب التلقائي غير مفعلة في هذه النسخة</div>
+994:                 <div style="color:var(--muted); font-size: 0.85rem; line-height: 1.6;">سيتم توفيرها في إصدار مؤسسي مستقبلي من ARGON Medical OS.</div>
+995:             </div>
+996: 
+997:             <!-- HIDDEN FIELDS FOR BACKWARD COMPATIBILITY -->
+998:             <div style="display:none">
+999:               <input type="checkbox" id="waEnabled">
+1000:               <input type="text" id="waSignature">
+1361: 
+1362: // ── COLOR ──
+1363: function onColor(c) {
+1364:   document.documentElement.style.setProperty('--teal',c);
+1365:   document.getElementById('colorHex').textContent=c;
+1366: }
+1367: 
+1368: // ── DEPARTMENTS AND COMPLEX MODE ENGINE ──
+1369: let _depts = {};
+1370: let activeDashboardDeptFilter = 'all';
+1371: 
+1372: function toggleComplexView(mode) {
+1373:   const isComplex = mode === 'medical_complex';
+1374:   const dp = document.getElementById('deptsPanel');
+1375:   if (dp) dp.style.display = isComplex ? 'block' : 'none';
+1376:   const dw = document.getElementById('docDeptWrapper');
+1377:   if (dw) dw.style.display = isComplex ? 'block' : 'none';
+1378:   const cn = document.getElementById('complexNav');
+1379:   if (cn) cn.style.display = isComplex ? 'block' : 'none';
+1380:   const cp = document.getElementById('complexPasscodes');
+1381:   if (cp) cp.style.display = isComplex ? 'grid' : 'none';
+1382:   
+1383:   // Render live views
+1384:   renderDashboardDeptFilters();
+1385:   if (typeof renderLive === 'function') {
+1386:     const actKeys = Object.keys(_bks).filter(k=>{
+1387:       const s=_bks[k].status;
+1388:       return s!=='done'&&s!=='completed'&&s!=='cancelled';
+1389:     });
+1390:     renderLive(actKeys);
+1391:   }
+1392: }
+1393: 
+1394: function renderDashboardDeptFilters() {
+1395:   const wrap = document.getElementById('dashDeptFilterWrap');
+1396:   if (!wrap) return;
+1397:   if (!_sets || _sets.mode !== 'medical_complex') {
+1398:     wrap.style.display = 'none';
+1399:     return;
+1400:   }
+1401:   wrap.style.display = 'flex';
+1402:   const keys = Object.keys(_depts);
+1403:   
+1404:   let html = `
+1405:     <button class="spec-chip ${activeDashboardDeptFilter === 'all' ? 'act' : ''}" onclick="setDashboardDeptFilter('all')" style="padding:6px 14px;border-radius:20px;font-family:inherit;font-weight:700;font-size:0.75rem;cursor:pointer;border:1.5px solid var(--border);background:var(--card)">
+1406:       🩺 الكل
+1407:     </button>
+1408:   `;
+1409:   keys.forEach(k => {
+1410:     const d = _depts[k];
+1411:     const actClass = activeDashboardDeptFilter === k ? 'act' : '';
+1412:     html += `
+1413:       <button class="spec-chip ${actClass}" onclick="setDashboardDeptFilter('${k}')" style="padding:6px 14px;border-radius:20px;font-family:inherit;font-weight:700;font-size:0.75rem;cursor:pointer;color:${d.color || 'var(--teal)'};border-color:${d.color || 'var(--teal)'};background:var(--card)">
+1414:         <span>${d.emoji || '🏢'}</span> ${sanitize(d.name)}
+1415:       </button>
+1416:     `;
+1417:   });
+1418:   wrap.innerHTML = html;
+1419: }
+1420: 
+1421: function setDashboardDeptFilter(deptId) {
+1422:   activeDashboardDeptFilter = deptId;
+1423:   renderDashboardDeptFilters();
+1424:   const actKeys = Object.keys(_bks).filter(k=>{
+1425:     const s=_bks[k].status;
+1426:     return s!=='done'&&s!=='completed'&&s!=='cancelled';
+1427:   });
+1428:   renderLive(actKeys);
+1429: }
+1430: 
+1431: db.ref(BASE+'/departments').on('value', snap => {
+1432:   _depts = snap.val() || {};
+1433:   renderDepts();
+1434:   updateDocDeptDropdown();
+1435:   renderDashboardDeptFilters();
+1436:   if (typeof renderDocs === 'function') renderDocs();
+1437: });
+1438: 
+1439: function renderDepts() {
+1440:   const dg = document.getElementById('deptsGrid');
+1441:   if (!dg) return;
+1442:   const keys = Object.keys(_depts);
+1443:   if (!keys.length) {
+1444:     dg.innerHTML = '<div style="color:var(--muted);font-size:.78rem;text-align:center;padding:12px">لا توجد أقسام مضافة بعد</div>';
+1445:     return;
+1446:   }
+1447:   dg.innerHTML = keys.map(k => {
+1448:     const d = _depts[k];
+1449:     return `
+1450:       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px">
+1451:         <span style="font-size:1.1rem">${d.emoji || '🏥'}</span>
+1452:         <div style="flex:1;margin-right:8px">
+1453:           <span style="font-weight:700;font-size:.85rem;color:var(--text)">${sanitize(d.name)}</span>
+1454:           <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${d.color || '#0d9488'};vertical-align:middle;margin-right:6px"></span>
+1455:         </div>
+1456:         <button type="button" onclick="deleteDept('${k}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.88rem;padding:4px"><i class="fas fa-trash"></i></button>
+1457:       </div>
+1458:     `;
+1459:   }).join('');
+1460: }
+1461: 
+1462: function updateDocDeptDropdown() {
+1463:   const select = document.getElementById('dDept');
+1464:   if (!select) return;
+1465:   const keys = Object.keys(_depts);
+1466:   let html = '<option value="">— عام —</option>';
+1467:   keys.forEach(k => {
+1468:     const d = _depts[k];
+1469:     html += `<option value="${k}">${d.emoji || '🏥'} ${sanitize(d.name)}</option>`;
+1470:   });
+1471:   select.innerHTML = html;
+1472: }
+1473: 
+1474: function addDept() {
+1475:   const name = document.getElementById('depN').value.trim();
+1476:   const emoji = document.getElementById('depI').value.trim() || '🏥';
+1477:   const color = document.getElementById('depC').value || '#0d9488';
+1478:   if (!name) { toast('⚠️ الرجاء إدخال اسم القسم', 'err'); return; }
+1479:   
+1480:   const deptObj = { name: sanitize(name), emoji: sanitize(emoji), color: color };
+1481:   db.ref(BASE + '/departments').push(deptObj).then(() => {
+1482:     toast('✅ تم إضافة القسم بنجاح', 'ok');
+1483:     document.getElementById('depN').value = '';
+1484:     document.getElementById('depI').value = '';
+1485:   }).catch(() => toast('❌ فشل إضافة القسم', 'err'));
+1486: }
+1487: 
+1488: function deleteDept(key) {
+1489:   if (!confirm('هل أنت متأكد من حذف هذا القسم؟ لن يتم حذف الأطباء، لكن سيتم إلغاء ربطهم بالقسم.')) return;
+1490:   db.ref(BASE + '/departments/' + key).remove().then(() => {
+1491:     toast('✅ تم حذف القسم', 'ok');
+1492:   });
+1493: }
+1494: 
+1495: // ── SETTINGS LISTENER ──
+1496: db.ref(BASE+'/settings').on('value', snap => {
+1497:   const s = snap.val();
+1498:   
+1499:   // If clinic does not exist in DB (e.g. failed creation)
+1500:   if (!s) {
+1501:     document.getElementById('topName').textContent = '⚠️ عيادة غير موجودة';
+1502:     document.getElementById('lClinicName').textContent = 'هذه العيادة غير موجودة أو تم حذفها';
+1503:     document.getElementById('lPass').disabled = true;
+1504:     document.getElementById('lPass').placeholder = 'العيادة غير متوفرة';
+1505:     const lbtn = document.querySelector('.lbtn');
+1506:     if (lbtn) { lbtn.disabled = true; lbtn.innerHTML = '❌ غير متوفرة'; lbtn.style.background = 'var(--red)'; }
+1507:     return;
+1508:   }
+1509:   
+1510:   _sets = s;
+1511:   _sets.mode = (s.type === 'complex' || s.mode === 'medical_complex') ? 'medical_complex' : 'single_clinic';
+1512:   checkAndSeedDefaultDepartments();
+1513:   
+1514:   // Only 'suspended' locks the dashboard (Super Admin only)
+1515:   if (s.status === 'suspended') {
+1516:     document.getElementById('lockScreen').classList.add('show');
+1517:   } else {
+1518:     document.getElementById('lockScreen').classList.remove('show');
+1519:   }
+1520: 
+1521:   // Load WhatsApp Config
+1522:   const wa = s.whatsapp || {};
+1523:   document.getElementById('waEnabled').checked = !!wa.enabled;
+1524:   document.getElementById('waSignature').value = wa.signature || '';
+1525:   document.getElementById('waRemind30').checked = wa.remind30 !== false;
+1526:   document.getElementById('waRemind10').checked = wa.remind10 !== false;
+1527:   document.getElementById('waPhar').checked = wa.phar !== false;
+1528:   document.getElementById('waLab').checked = wa.lab !== false;
+1529:   document.getElementById('waRad').checked = wa.rad !== false;
+1530:   document.getElementById('waBill').checked = wa.bill !== false;

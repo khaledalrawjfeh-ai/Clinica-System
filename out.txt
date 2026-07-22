@@ -1,0 +1,20 @@
+<div class="ni" id="navEmr" onclick="window.open('emr.html?id='+CID,'_blank')"
+<div class="ni" id="navPatFilesReadOnly" onclick="window.open('emr.html?id='+CID+'&readonly=true','_blank')"
+<div class="ni" onclick="window.open('pharmacy.html?id='+CID,'_blank')"><i class="fas fa-capsules"
+<div class="ni" onclick="window.open('lab.html?id='+CID,'_blank')"><i class="fas fa-vial"
+<div class="ni" onclick="window.open('radiology.html?id='+CID,'_blank')"><i class="fas fa-x-ray"
+<button class="tbtn" onclick="window.ArgonEnterprise.Excel.exportComprehensiveReport(CID)"
+<div class="slb">النشاط المباشر الآن <small id="stCID" style="opacity:0.5;font-size:0.5rem"></small></div>
+<i class="fas fa-search" style="color:var(--muted);margin-right:8px"></i>
+<input type="text" id="histSearch" oninput="renderHist()"
+<button onclick="window.open('smart-log.html?id='+CID,'_blank')"
+<input type="text" id="blSearch" onkeyup="renderReceivables()" placeholder="بحث باسم المريض أو الرقم..."
+const uP = new URLSearchParams(window.location.search);
+let CID = uP.get('id') || localStorage.getItem('argon_id') || '1';
+if (uP.get('id')) localStorage.setItem('argon_id', CID);
+const BASE = 'clinics/' + CID;
+let curLang = localStorage.getItem('argon_dash_lang_' + CID) || 'ar';
+localStorage.setItem('argon_dash_lang_' + CID, lang);
+sessionStorage.setItem('clinica_auth_' + CID, '1');
+sessionStorage.removeItem('clinica_auth_' + CID);
+if (sessionStorage.getItem('clinica_auth_' + CID) === '1') {

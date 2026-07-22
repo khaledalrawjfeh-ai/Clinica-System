@@ -1,0 +1,324 @@
+{
+  "rules": {
+
+    /* ════════════════════════════════════════════════════════
+     * ARGON MEDICAL OS — Firebase Security Rules v2.2 (SaaS Mode)
+     * عزل بيانات العيادات على مستوى الخادم (Server-Side)
+     * 
+     * معمارية SaaS: يسمح للأطباء بإنشاء حساباتهم بأنفسهم
+     * ════════════════════════════════════════════════════════ */
+
+    /* ────────────────────────────────────────────────────────
+     * خريطة UID → clinicId (Server-only — لا يقرأها العميل)
+     * ────────────────────────────────────────────────────────  */
+    "clinic_auth_map": {
+      ".read":  false,
+      ".write": false,
+      "$uid": {
+        /* السماح للسوبر أدمن، أو للمستخدم نفسه بالتسجيل لأول مرة بشرط ألا يدعي أنه سوبر أدمن */
+        ".write": "auth != null && (
+          root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__' ||
+          (auth.uid === $uid && !data.exists() && newData.val() !== '__SUPER__')
+        )",
+        ".validate": "newData.isString() && (
+          root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__' ||
+          (newData.val() !== '__SUPER__' && newData.val().length > 2)
+        )"
+      }
+    },
+
+    /* ────────────────────────────────────────────────────────
+     * إعدادات Auth منفصلة — لربط الإيميل بالعيادة
+     * ────────────────────────────────────────────────────────  */
+    "clinic_auth_settings": {
+      ".read":  false,
+      ".write": false,
+      "$clinicId": {
+        ".read":  "auth != null && (root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__' || root.child('clinic_auth_map/' + auth.uid).val() === $clinicId)",
+        ".write": "auth != null && (root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__' || (root.child('clinic_auth_map/' + auth.uid).val() === $clinicId && !data.exists()))",
+        ".validate": "newData.hasChildren(['authEmail'])"
+      }
+    },
+
+    /* ────────────────────────────────────────────────────────
+     * إعدادات السوبر أدمن
+     * ────────────────────────────────────────────────────────  */
+    "super_admin": {
+      ".read":  "auth != null && root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__'",
+      ".write": "auth != null && root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__'"
+    },
+
+    /* ════════════════════════════════════════════════════════
+     * قلب النظام — بيانات العيادات
+     * ════════════════════════════════════════════════════════ */
+    "clinics": {
+      "$clinicId": {
+
+        /* ── القراءة: السوبر أدمن أو صاحب العيادة المصادق (عبر Custom Claims أو Map) ── */
+        ".read": "auth != null && (
+          auth.token.clinicId === $clinicId ||
+          auth.token.role === 'super' ||
+          root.child('clinic_auth_map/' + auth.uid).val() === $clinicId ||
+          root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__'
+        )",
+
+        /* ── الكتابة العامة: نفس القاعدة ── */
+        ".write": "auth != null && (
+          auth.token.clinicId === $clinicId ||
+          auth.token.role === 'super' ||
+          root.child('clinic_auth_map/' + auth.uid).val() === $clinicId ||
+          root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__'
+        )",
+
+        /* ════════════════════════════════
+         * الإعدادات
+         * ════════════════════════════════ */
+        "settings": {
+          "name": {
+            ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 200"
+          },
+          "status": {
+            ".validate": "newData.val() === 'active' || newData.val() === 'suspended' || newData.val() === 'maintenance'"
+          }
+        },
+
+        /* ════════════════════════════════
+         * Active Logins (PHASE 3 - Concurrency Lock)
+         * ════════════════════════════════ */
+        "active_logins": {
+          "$staffId": {
+            ".validate": "newData.hasChildren(['sessionId'])"
+          }
+        },
+
+        /* ════════════════════════════════
+         * المرضى — مع الفهارس الكاملة
+         * ════════════════════════════════ */
+        "patients": {
+          ".indexOn": ["info/name", "info/phone", "info/nationalId", "info/mrn"],
+
+          "$patientId": {
+            ".validate": "newData.hasChildren(['info'])",
+            "info": {
+              ".validate": "newData.hasChildren(['name'])",
+              "name": {
+                ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 150"
+              },
+              "phone": {
+                ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 20)"
+              },
+              "nationalId": {
+                ".validate": "!newData.exists() || (newData.isString() && newData.val().length >= 9)"
+              },
+              "mrn": {
+                ".validate": "!newData.exists() || newData.isString()"
+              }
+            },
+
+            /* ── الزيارات: append-only (لا حذف) ── */
+            "visits": {
+              "$visitId": {
+                ".write": "auth != null && (
+                  root.child('clinic_auth_map/' + auth.uid).val() === $clinicId ||
+                  root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__'
+                ) && (
+                  !data.exists() ||
+                  (newData.exists() && !newData.child('status').exists()) ||
+                  (newData.exists() && newData.child('status').val() === 'archived') ||
+                  (newData.exists() && newData.child('status').val() === 'signed')
+                )"
+              }
+            }
+          }
+        },
+
+        /* ════════════════════════════════
+         * الحجوزات
+         * ════════════════════════════════ */
+        "bookings": {
+          ".indexOn": ["date", "status", "doctorId", "patientId", "docKey"],
+          "$bookingId": {
+            ".validate": "newData.hasChildren(['patName', 'date'])"
+          }
+        },
+        
+        "archived_bookings": {
+          ".indexOn": ["date", "status", "doctorId", "patientId"]
+        },
+
+        /* ════════════════════════════════
+         * الأطباء
+         * ════════════════════════════════ */
+        "doctors": {
+          "$doctorId": {
+            ".validate": "newData.hasChildren(['name'])"
+          }
+        },
+
+        /* ════════════════════════════════
+         * طلبات المختبر
+         * ════════════════════════════════ */
+        "lab_orders": {
+          ".indexOn": ["patientId", "status", "createdAt"],
+          "$orderId": {
+            ".validate": "newData.hasChildren(['patientId', 'requestedTests'])"
+          }
+        },
+
+        /* ════════════════════════════════
+         * طلبات الأشعة
+         * ════════════════════════════════ */
+        "radiology_orders": {
+          ".indexOn": ["patientId", "status"],
+          "$orderId": {
+            ".validate": "newData.hasChildren(['patientId', 'requestedScans'])"
+          }
+        },
+
+        /* ════════════════════════════════
+         * الوصفات الطبية
+         * ════════════════════════════════ */
+        "prescriptions": {
+          ".indexOn": ["patientId", "status"],
+          "$rxId": {
+            ".validate": "newData.hasChildren(['patientId', 'medications'])"
+          }
+        },
+
+        /* ════════════════════════════════
+         * الفواتير والمعاملات
+         * ════════════════════════════════ */
+        "invoices": {
+          ".indexOn": ["patientId", "status", "createdAt"],
+          "$invId": {
+            ".validate": "newData.hasChildren(['patientId', 'total'])",
+            ".write": "auth != null && (
+              root.child('clinic_auth_map/' + auth.uid).val() === $clinicId ||
+              root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__'
+            ) && newData.exists()"
+          }
+        },
+        
+        "financial_transactions": {
+          ".indexOn": ["patientId", "invoiceId", "timestamp"],
+          "$txId": {
+            ".write": "auth != null && (
+              root.child('clinic_auth_map/' + auth.uid).val() === $clinicId ||
+              root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__'
+            ) && !data.exists()",
+            ".validate": "newData.hasChildren(['patientId', 'type', 'amount', 'timestamp']) &&
+              newData.child('amount').isNumber() &&
+              newData.child('amount').val() > 0 &&
+              (newData.child('type').val() === 'PAYMENT' || newData.child('type').val() === 'REVERSAL')"
+          }
+        },
+
+        /* ════════════════════════════════
+         * Audit Log — كتابة فقط (append-only, لا حذف)
+         * ════════════════════════════════ */
+        "audit_logs": {
+          "$logId": {
+            ".write": "auth != null && (
+              root.child('clinic_auth_map/' + auth.uid).val() === $clinicId ||
+              root.child('clinic_auth_map/' + auth.uid).val() === '__SUPER__'
+            ) && !data.exists()",
+            ".validate": "newData.hasChildren(['action', 'timestamp']) &&
+              newData.child('action').isString() &&
+              newData.child('action').val().length >= 2 &&
+              newData.child('action').val().length <= 100"
+          }
+        },
+
+        /* ════════════════════════════════
+         * الجلسات النشطة (soft lock)
+         * ════════════════════════════════ */
+        "active_sessions": {
+          ".indexOn": ["doctorId"],
+          "$patientId": {
+            ".validate": "newData.hasChildren(['doctorId', 'lockedAt'])"
+          }
+        },
+
+        /* ════════════════════════════════
+         * الإشعارات
+         * ════════════════════════════════ */
+        "notifications": {
+          ".indexOn": ["role", "docKey", "createdAt"]
+        },
+
+        /* ════════════════════════════════
+         * مخزون الصيدلية
+         * ════════════════════════════════ */
+        "pharmacy_inventory": {
+          ".indexOn": ["name", "barcode", "active"]
+        },
+
+        /* ════════════════════════════════
+         * Billing Triggers
+         * ════════════════════════════════ */
+        "billing_triggers": {
+          ".indexOn": ["processingStatus", "createdAt"]
+        },
+
+        /* ════════════════════════════════
+         * التحويلات الداخلية
+         * ════════════════════════════════ */
+        "referrals": {
+          ".indexOn": ["status", "toDept"]
+        },
+
+        /* ════════════════════════════════
+         * Identity Changes — سوبر أدمن يعتمد
+         * ════════════════════════════════ */
+        "identity_changes": {
+          ".indexOn": ["status", "requestedAt"]
+        },
+
+        /* ════════════════════════════════
+         * مهام الأطباء — الطبيب يقرأ مهامه فقط
+         * ════════════════════════════════ */
+        "tasks": {
+          "$doctorId": {
+            ".read":  "auth != null && root.child('clinic_auth_map/' + auth.uid).val() === $clinicId",
+            ".write": "auth != null && root.child('clinic_auth_map/' + auth.uid).val() === $clinicId"
+          }
+        },
+
+        /* ════════════════════════════════
+         * الأقسام + كتالوج الأسعار
+         * ════════════════════════════════ */
+        "departments": {
+          ".indexOn": ["name"]
+        },
+
+        "pricing_catalog": {
+          ".indexOn": ["type", "active", "name"]
+        },
+
+        /* ════════════════════════════════
+         * Billing Sessions
+         * ════════════════════════════════ */
+        "billing_sessions": {
+          ".indexOn": ["status", "patientId"]
+        },
+
+        /* ════════════════════════════════
+         * Specialty Data (للتخصصات الطبية)
+         * ════════════════════════════════ */
+        "specialty_data": {
+          ".indexOn": ["specialty"]
+        }
+
+      }
+    },
+
+    /* ════════════════════════════════════════════════════════
+     * DENY ALL — أي مسار غير مذكور أعلاه = ممنوع تماماً
+     * ════════════════════════════════════════════════════════ */
+    "$other": {
+      ".read":  false,
+      ".write": false
+    }
+
+  }
+}

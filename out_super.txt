@@ -1,0 +1,20 @@
+// ══ FIREBASE ══
+const FC={apiKey:"AIzaSyCDT_H-1klxbtuVR5n5GOVHKlxcmvY_2GA",authDomain:"clinica-system-e71b9.firebaseapp.com",databaseURL:"https://clinica-system-e71b9-default-rtdb.firebaseio.com",projectId:"clinica-system-e71b9",storageBucket:"clinica-system-e71b9.firebasestorage.app",messagingSenderId:"833103541884",appId:"1:833103541884:web:f8ee6ca4b3d8400cf0fbf9"};
+firebase.initializeApp(FC);
+const db=firebase.database();
+function getBase(){return window.location.href.substring(0,window.location.href.lastIndexOf('/')+1)}
+await firebase.auth().signInWithEmailAndPassword(email, p);
+const uid = firebase.auth().currentUser.uid;
+const snap = await db.ref(`clinic_auth_map/${uid}`).once('value');
+await firebase.auth().signOut();
+firebase.auth().onAuthStateChanged(user => {
+db.ref(`clinic_auth_map/${user.uid}`).once('value').then(snap => {
+firebase.auth().signOut().catch(()=>{});
+try{db.ref('clinics').off()}catch(e){}_dataMap={};data=[];
+const user = firebase.auth().currentUser;
+db.ref('.info/connected').on('value',s=>{
+try{db.ref('clinics').off()}catch(e){}_dataMap={};data=[];
+db.ref('clinics').on('child_added',snap=>{
+db.ref('clinics').on('child_changed',snap=>{const val=snap.val();if(val&&typeof val==='object'){_dataMap[snap.key]={id:snap.key,...val};scheduleRender()}});
+db.ref('clinics').on('child_removed',snap=>{delete _dataMap[snap.key];scheduleRender()});
+const snap=await db.ref(`clinics/${id}`).once('value');

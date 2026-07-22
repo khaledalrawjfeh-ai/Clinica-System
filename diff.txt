@@ -1,0 +1,240 @@
+--- 
++++ 
+@@ -418,6 +418,40 @@
+       await writable.close();
+     } catch (writeErr) {
+       _updateTopbarBadge('error');
++
++      /*
++       * ── سيناريو 3: المجلد غير موجود (حُذف أو الفلاشة سُحبت) ──
++       * NotFoundError     = المجلد أو الملف لم يُعثر عليه في نظام الملفات
++       * TypeMismatchError = تغيّر نوع المسار (مثلاً الفلاشة أصبحت بدون نظام ملفات)
++       * DataError         = مقبض المجلد تالف أو انقطع الاتصال به
++       * في هذه الحالات: نُعلن عن "فقدان المجلد"، نوقف المحرك المحلي، ونُظهر تنبيهاً للمستخدم
++       * المحرك السحابي يستمر يعمل باستقلالية تامة (شبكة الأمان)
++       */
++      const isFolderLost = (
++        writeErr.name === 'NotFoundError' ||
++        writeErr.name === 'TypeMismatchError' ||
++        writeErr.name === 'DataError' ||
++        (writeErr.message && writeErr.message.toLowerCase().includes('not found'))
++      );
++
++      if (isFolderLost) {
++        // ── تسجيل حالة "المجلد مفقود" في الإعدادات ──
++        await _saveSettings({ folderLost: true, permissionOk: false });
++        // ── تنظيف المقبض التالف من الذاكرة ──
++        _dirHandle = null;
++        // ── وقف المحرك المحلي لمنع محاولات عمياء لا نهائية ──
++        stopBackupEngine();
++        // ── إطلاق حدث "المجلد مفقود" لأي مستمع خارجي ──
++        _emit('folder-lost', { clinicId: _clinicId, reason: writeErr.message });
++        // ── تحديث واجهة المستخدم ──
++        _updateSidebarDot('error');
++        _updateTopbarBadge('error');
++        _showFolderLostToast();
++        _log('🔴 سيناريو 3: المجلد المحلي مفقود (محذوف أو الفلاشة سُحبت) — تم إيقاف المحرك المحلي. السحابة لا تزال تعمل.', 'error');
++        if (!silent) throw new Error('المجلد المحلي لم يعد موجوداً (قد يكون محذوفاً أو الفلاشة سُحبت). يرجى اختيار مجلد جديد لاستئناف الحفظ المحلي.');
++        return null;
++      }
++
+       _log('فشل كتابة الملف على القرص: ' + writeErr.message, 'error');
+       if (!silent) throw writeErr;
+       return null;
+@@ -992,6 +1026,7 @@
+       browserSupported,
+       folderConfigured:  !!s.folderConfigured,
+       folderName:        s.folderName   || null,
++      folderLost:        !!s.folderLost,    // سيناريو 3: المجلد محذوف أو الفلاشة سُحبت
+       permissionOk:      s.permissionOk !== false,
+       lastBackupAt:      s.lastBackupAt || null,
+       lastBackupFile:    s.lastBackupFile || null,
+@@ -1443,6 +1478,20 @@
+     setTimeout(function () { if (t.parentNode) t.remove(); }, 12000);
+   }
+ 
++  /** سيناريو 3: تنبيه "المجلد مفقود" — يختلف عن انتهاء الصلاحية بالشكل والرسالة */
++  function _showFolderLostToast() {
++    const id = 'abp-lost-toast';
++    if (document.getElementById(id)) return;
++    const t = document.createElement('div');
++    t.id = id;
++    t.style.cssText = 'position:fixed;top:68px;right:16px;z-index:9999970;background:rgba(239,68,68,.92);color:#fff;border-radius:10px;padding:13px 18px;font-weight:700;font-size:.83rem;font-family:\'Tajawal\',sans-serif;direction:rtl;max-width:340px;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer;line-height:1.6;animation:abp-in .3s ease';
++    t.innerHTML = '🔴 <b>المجلد المحلي لم يعد موجوداً!</b><br><span style="font-weight:500;font-size:.78rem">ربما تم حذفه أو سحب الفلاشة. انقر هنا لاختيار مجلد جديد.<br>☁️ النسخ السحابي لا يزال يعمل بشكل طبيعي.</span>';
++    t.addEventListener('click', function () { t.remove(); showPanel(); });
++    document.body.appendChild(t);
++    // يبقى مرئياً أطول لأن الموقف أكثر إلحاحاً
++    setTimeout(function () { if (t.parentNode) t.remove(); }, 20000);
++  }
++
+   /* ════════════════════════════════════════
+      17. لوحة الإعدادات الكاملة — Full Panel
+      (مُوسَّعة بقسم السحابة الكامل + واجهة تأكيد الاستعادة)
+@@ -1459,16 +1508,10 @@
+ 
+     const status = await getStatus();
+     const log    = await getBackupLog(8);
+-    let cloudFiles = _cloudFilesCache || [];
+-
+-    // جلب القائمة السحابية في الخلفية حتى لا تعلق اللوحة إذا كان الاتصال بطيئاً أو محظوراً (مثل وضع التصفح الخفي)
++    let cloudFiles = [];
+     if (status.cloudEnabled) {
+-      fetchCloudBackups(_clinicId).then(function (files) {
+-        _cloudFilesCache = files;
+-        _refreshPanel();
+-      }).catch(function (e) {
+-        console.warn('[ArgonBackup] فشل جلب قائمة النسخ السحابية:', e.message);
+-      });
++      try { cloudFiles = await fetchCloudBackups(_clinicId); _cloudFilesCache = cloudFiles; }
++      catch (e) { console.warn('[ArgonBackup] فشل جلب قائمة النسخ السحابية:', e.message); }
+     }
+ 
+     const overlay = document.createElement('div');
+@@ -1527,6 +1570,11 @@
+       sClass = 'abp-s-warn'; sIcon = '⚠️';
+       sTitle = 'النسخ المحلي غير مدعوم في هذا المتصفح';
+       sSub   = 'يتطلب Chrome أو Edge 86+ — لكن النسخ السحابي ☁️ يعمل في أي متصفح';
++    } else if (status.folderLost) {
++      // سيناريو 3: المجلد تم حذفه أو الفلاشة سُحبت
++      sClass = 'abp-s-error'; sIcon = '📂❌';
++      sTitle = 'المجلد المحلي غير موجود — الفلاشة مفصولة أو المجلد محذوف';
++      sSub   = 'اختر مجلداً جديداً لاستئناف الحفظ المحلي. البيانات الحالية آمنة على السحابة ☁️';
+     } else if (!status.folderConfigured) {
+       sClass = 'abp-s-idle'; sIcon = '📂';
+       sTitle = 'النسخ المحلي غير مُعدّ بعد';
+@@ -1534,7 +1582,7 @@
+     } else if (!status.permissionOk) {
+       sClass = 'abp-s-warn'; sIcon = '🔒';
+       sTitle = 'انتهت صلاحية الوصول لمجلد الحفظ المحلي';
+-      sSub   = 'انقر "تغيير المجلد" وأعد اختياره لتفعيل الحماية المحلية';
++      sSub   = 'انقر "استئناف النسخ" أدناه (نقرة واحدة فقط — سريع)';
+     } else {
+       sClass = 'abp-s-ok'; sIcon = '🛡️';
+       sTitle = 'بياناتك محمية محلياً — المحرك يعمل';
+@@ -1612,13 +1660,25 @@
+         <div class="abp-btns-row">
+           <button class="abp-btn abp-btn-primary" id="abp-choose-btn" ${!status.browserSupported ? 'disabled' : ''}>
+             <i class="fas fa-folder-open"></i>
+-            ${status.folderConfigured ? 'تغيير المجلد' : 'اختيار مجلد الحفظ'}
++            ${status.folderLost ? 'اختيار مجلد جديد (مطلوب)' : status.folderConfigured ? 'تغيير المجلد' : 'اختيار مجلد الحفظ'}
+           </button>
+-          ${status.folderConfigured ? `
++          ${(status.folderConfigured && !status.permissionOk && !status.folderLost) ? `
++            <button class="abp-btn abp-btn-now" id="abp-renew-btn">
++              <i class="fas fa-rotate-right"></i> استئناف النسخ (نقرة واحدة)
++            </button>` : ''}
++          ${(status.folderConfigured && status.permissionOk && !status.folderLost) ? `
+             <button class="abp-btn abp-btn-now" id="abp-now-btn">
+               <i class="fas fa-save"></i> نسخ محلي الآن
+             </button>` : ''}
+         </div>
++
++        <!-- سيناريو 5: تنبيه تعدد الأجهزة — يظهر دائماً عند الإعداد -->
++        ${status.folderConfigured ? `
++        <div style="margin-top:10px;padding:9px 13px;background:rgba(14,165,233,.05);border:1px solid rgba(14,165,233,.2);border-radius:9px;font-size:.73rem;color:#94a3b8;line-height:1.65">
++          💡 <strong style="color:#38bdf8">تنبيه تعدد الأجهزة:</strong> إذا فتح عدة موظفين النظام في نفس الوقت، يعمل كل جهاز بنسخه المحلية <strong>باستقلالية</strong>.
++          يُنصح بتخصيص جهاز الاستقبال (المُشغَّل طوال اليوم) ليكون المسؤول عن النسخ المحلي.
++          <strong>النسخ السحابي ☁️ موحّد لجميع الأجهزة</strong>.
++        </div>` : ''}
+       </div>
+ 
+       ${status.folderConfigured ? `
+@@ -1688,9 +1748,16 @@
+               يضمن استعادة بيانات العيادة بالكامل من أي مكان في العالم في حال تلف أو سرقة جهاز العيادة —
+               حتى لو لم يكن مجلد النسخ المحلي مُعدّاً.
+             </div>
++            <div class="abp-cloud-disclosure">
++              ⚠️ <strong>إفصاح أمني مطلوب قبل التفعيل:</strong> النظام الحالي يستخدم تسجيل دخول مجهول
++              (Anonymous Auth)، لذلك فإن العزل بين بيانات العيادات المختلفة على مستوى التخزين السحابي
++              يعتمد حالياً على حماية <strong>"أساسية" (Tier 1)</strong> فقط — وهي ليست عزلاً تاماً مضموناً 100%.
++              للحصول على عزل حقيقي مضمون، يلزم تفعيل <strong>"الحماية المعززة" (Tier 2)</strong> من القسم
++              أدناه بعد التفعيل (تتطلب خطوة نشر بسيطة من المطوّر).
++            </div>
+             <label class="abp-ack-row">
+               <input type="checkbox" id="abp-cloud-ack">
+-              <span>أوافق على تفعيل النسخ الاحتياطي السحابي لحماية بياناتي من الضياع في حالات الطوارئ.</span>
++              <span>أتفهم طبيعة الحماية الأساسية المذكورة أعلاه، وأرغب بتفعيل النسخ السحابي الآن (يمكن ترقية الحماية لاحقاً في أي وقت)</span>
+             </label>
+             <button class="abp-btn abp-btn-primary" id="abp-cloud-enable-btn" disabled>
+               <i class="fas fa-cloud-upload-alt"></i> تفعيل النسخ الاحتياطي السحابي
+@@ -1813,6 +1880,8 @@
+         chooseBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الاختيار...';
+         try {
+           await requestDirectoryAccess();
++          // مسح حالة "المجلد المفقود" عند اختيار مجلد جديد (سيناريو 3)
++          await _saveSettings({ folderLost: false });
+           const s   = await _loadSettings();
+           const ivM = parseInt(s.intervalMinutes) || 60;
+           startSilentBackupEngine(_clinicId, ivM);
+@@ -1821,6 +1890,35 @@
+           if (e.name !== 'AbortError') alert('❌ تعذّر اختيار المجلد:\n' + e.message);
+           chooseBtn.disabled = false;
+           chooseBtn.innerHTML = '<i class="fas fa-folder-open"></i> اختيار مجلد الحفظ';
++        }
++      });
++    }
++
++    /*
++     * سيناريو 1: "استئناف النسخ" بنقرة واحدة
++     * يستخدم نفس المقبض المحفوظ ويطلب من المتصفح تجديد الصلاحية فقط
++     * بدون إعادة فتح نافذة اختيار المجلد كاملة
++     */
++    const renewBtn = overlay.querySelector('#abp-renew-btn');
++    if (renewBtn) {
++      renewBtn.addEventListener('click', async function () {
++        renewBtn.disabled = true;
++        renewBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ التجديد...';
++        try {
++          let handle = _dirHandle || await _loadHandle();
++          if (!handle) throw new Error('لا يوجد مقبض محفوظ — يرجى اختيار المجلد من جديد.');
++          const perm = await handle.requestPermission({ mode: 'readwrite' });
++          if (perm !== 'granted') throw new Error('تم رفض الإذن من المتصفح.');
++          _dirHandle = handle;
++          await _saveSettings({ permissionOk: true, folderLost: false });
++          const s   = await _loadSettings();
++          startSilentBackupEngine(_clinicId, parseInt(s.intervalMinutes) || 60);
++          if (typeof window.toast === 'function') window.toast('✅ تم استئناف النسخ الاحتياطي بنجاح!', 'ok');
++          _refreshPanel();
++        } catch (e) {
++          alert('❌ فشل استئناف النسخ:\n' + e.message + '\n\nجرّب زر "تغيير المجلد" بدلاً من ذلك.');
++          renewBtn.disabled = false;
++          renewBtn.innerHTML = '<i class="fas fa-rotate-right"></i> استئناف النسخ (نقرة واحدة)';
+         }
+       });
+     }
+@@ -2094,6 +2192,35 @@
+         const permOk = await _queryPermissionSilent(handle);
+ 
+         if (permOk) {
++          // ── تأكد من أن المجلد لا يزال موجوداً فعلاً (سيناريو 3) ──
++          let folderStillExists = true;
++          try { await handle.getFileHandle('.argon-probe', { create: false }); } catch (probeErr) {
++            // "NotFoundError" هنا طبيعي (الملف غير موجود ولكن المجلد موجود)
++            // أي خطأ آخر يعني مشكلة حقيقية في المجلد
++            if (probeErr.name !== 'NotFoundError' && probeErr.name !== 'TypeMismatchError') {
++              folderStillExists = (probeErr.name === 'NotFoundError');
++            }
++          }
++          // نختبر الوصول الفعلي بمحاولة قراءة المجلد
++          try { for await (const _ of handle.entries()) { break; } }
++          catch (iterErr) {
++            if (iterErr.name === 'NotFoundError' || iterErr.name === 'DataError') {
++              folderStillExists = false;
++            }
++          }
++
++          if (!folderStillExists) {
++            // المجلد أُعلن عن صلاحيته لكنه غير موجود فعلياً (سيناريو 3 عند الإقلاع)
++            await _saveSettings({ folderLost: true, permissionOk: false });
++            _dirHandle = null;
++            _updateSidebarDot('error');
++            _updateTopbarBadge('error');
++            _emit('folder-lost', { clinicId: _clinicId, reason: 'folder-not-found-on-startup' });
++            setTimeout(_showFolderLostToast, 2000);
++            _log('🔴 سيناريو 3 (إقلاع): المجلد المحفوظ لم يعد موجوداً — يرجى اختيار مجلد جديد', 'error');
++            return;
++          }
++
+           const ivMin = parseInt(s.intervalMinutes) || 60;
+           startSilentBackupEngine(_clinicId, ivMin);
+           _updateSidebarDot('ok');

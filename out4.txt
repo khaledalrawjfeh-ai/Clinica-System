@@ -1,0 +1,33 @@
+function scheduleRender(){if(_renderTimer)clearTimeout(_renderTimer);_renderTimer=setTimeout(()=>{data=Object.values(_dataMap);updateStats();filterList()},150)}
+
+// ══ STATS ══
+function updateStats(){
+    document.getElementById('s-tot').textContent=data.length;
+    document.getElementById('s-on').textContent=data.filter(r=>(r.settings?.status||'active')==='active').length;
+    document.getElementById('s-off').textContent=data.filter(r=>r.settings?.status==='suspended'||r.settings?.status==='maintenance').length;
+    document.getElementById('s-single').textContent=data.filter(r=>(r.settings?.type||'single')==='single').length;
+    document.getElementById('s-complex').textContent=data.filter(r=>r.settings?.type==='complex').length;
+}
+
+// ══ FILTER ══
+function setF(f,el){curF=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');filterList()}
+function filterList(){
+    const q=(document.getElementById('srch')?.value||'').toLowerCase();
+    let f=data;
+    if(curF==='active')f=f.filter(r=>(r.settings?.status||'active')==='active');
+    if(curF==='suspended')f=f.filter(r=>r.settings?.status==='suspended'||r.settings?.status==='maintenance');
+    if(curF==='single')f=f.filter(r=>(r.settings?.type||'single')==='single');
+    if(curF==='complex')f=f.filter(r=>r.settings?.type==='complex');
+    if(q)f=f.filter(r=>(r.settings?.name||'').toLowerCase().includes(q)||r.id.toLowerCase().includes(q));
+    renderCards(f);
+}
+
+// ══ RENDER ══
+function renderCards(d){
+    const grid=document.getElementById('resGrid');grid.innerHTML='';
+    if(!d.length){grid.innerHTML='<div class="empty-state"><i class="fas fa-clinic-medical"></i><p>لا توجد عيادات</p><small>أضف عيادة جديدة من الأعلى</small></div>';return}
+    const base=getBase();
+    grid.innerHTML=d.map(r=>{
+        try{
+            const s=r.settings||{},isOff=s.status==='suspended'||s.status==='maintenance';
+            const c=s.color||'#0d9488',type=s.type|

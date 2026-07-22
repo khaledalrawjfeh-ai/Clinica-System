@@ -1,0 +1,33 @@
+renew: False
+function _buildPanelContent(status, log, cloudFiles) {
+    cloudFiles = cloudFiles || [];
+
+    /* ── حالة الحماية المحلية ── */
+    let sClass, sIcon, sTitle, sSub;
+    if (!status.browserSupported) {
+      sClass = 'abp-s-warn'; sIcon = '⚠️';
+      sTitle = 'النسخ المحلي غير مدعوم في هذا المتصفح';
+      sSub   = 'يتطلب Chrome أو Edge 86+ — لكن النسخ السحابي ☁️ يعمل في أي متصفح';
+    } else if (status.folderLost) {
+      // سيناريو 3: المجلد تم حذفه أو الفلاشة سُحبت
+      sClass = 'abp-s-error'; sIcon = '📂❌';
+      sTitle = 'المجلد المحلي غير موجود — الفلاشة مفصولة أو المجلد محذوف';
+      sSub   = 'اختر مجلداً جديداً لاستئناف الحفظ المحلي. البيانات الحالية آمنة على السحابة ☁️';
+    } else if (!status.folderConfigured) {
+      sClass = 'abp-s-idle'; sIcon = '📂';
+      sTitle = 'النسخ المحلي غير مُعدّ بعد';
+      sSub   = 'اختر مجلداً على جهازك لبدء حماية البيانات محلياً';
+    } else if (!status.permissionOk) {
+      sClass = 'abp-s-warn'; sIcon = '🔒';
+      sTitle = 'انتهت صلاحية الوصول لمجلد الحفظ المحلي';
+      sSub   = 'انقر "استئناف النسخ" أدناه (نقرة واحدة فقط — سريع)';
+    } else {
+      sClass = 'abp-s-ok'; sIcon = '🛡️';
+      sTitle = 'بياناتك محمية محلياً — المحرك يعمل';
+      sSub   = status.lastBackupAt
+        ? 'آخر نسخة محلية: ' + new Date(status.lastBackupAt).toLocaleString('ar-JO', {dateStyle:'short', timeStyle:'short'})
+        : 'جارٍ إعداد أول نسخة...';
+    }
+
+    const logRows = log.length ? log.map(function (l) {
+      const targetTag = { local:'💻 محلي', c

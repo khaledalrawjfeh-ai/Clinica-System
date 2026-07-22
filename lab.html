@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#030b0a">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <title>ARGON | المختبر الطبي الذكي 🧪</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="pharmacy.css">
+</head>
+<body data-theme="dark">
+
+
+
+<!-- TOPBAR -->
+<div class="topbar" style="background:var(--panel); border-bottom:1px solid var(--border); color:var(--text);">
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="tlogo" id="tlogo" style="background:linear-gradient(135deg, #14b8a6, #10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">ARGON LABORATORY</span>
+    <span style="width:1px;height:20px;background:var(--border)"></span>
+    <span id="topName" style="font-size:.9rem;font-weight:700;color:var(--text)">...</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn-secondary" id="themeBtn" onclick="toggleTheme()" style="padding:8px 12px"><i class="fas fa-moon"></i></button>
+
+    <button class="btn-secondary" onclick="ArgonSession.logout()" style="padding:8px 12px;color:var(--red)"><i class="fas fa-sign-out-alt"></i></button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="sidebar glass-panel">
+    <div style="width:100%">
+      <div style="font-size:0.75rem;color:var(--muted);font-weight:800;padding:8px 16px;text-transform:uppercase;letter-spacing:1px">تحاليل المختبر</div>
+      <div class="ni on" onclick="sw('labBox',this)"><i class="fas fa-microscope"></i> التحاليل الواردة</div>
+    </div>
+    <div style="text-align:center;font-size:0.7rem;color:var(--muted)">
+      POWERED BY <b>ARGON EMR</b>
+    </div>
+  </div>
+
+  <!-- MAIN VIEWS CONTAINER -->
+  <div class="main-content">
+    
+    <!-- LAB ORDERS LIST -->
+    <div id="labBox" class="sec on">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="font-weight:900">🔬 طلبات الفحوصات المخبرية</h2>
+          <p style="font-size:0.82rem;color:var(--muted)">طلبات التحاليل والفسلجة المخبرية المحالة من العيادات الطبية</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-secondary" id="btnFilterWaiting" onclick="filterLab('waiting')" style="border-color:var(--amber);color:var(--amber)">⏳ بانتظار إجراء التحليل</button>
+          <button class="btn-secondary" id="btnFilterCompleted" onclick="filterLab('completed')">✅ تحاليل مكتملة</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:15px;margin-bottom:15px;align-items:center">
+        <div style="position:relative;flex:1;max-width:400px">
+          <i class="fas fa-search" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--muted)"></i>
+          <input type="text" id="labSearchInp" onkeyup="renderLabOrders()" placeholder="🔍 ابحث بالاسم أو رقم الهاتف..." class="fi" style="padding-right:40px;width:100%;background:var(--panel);border:1px solid var(--border)">
+        </div>
+      </div>
+
+      <div id="labGrid" class="card-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:80px;color:var(--muted)">
+          <i class="fas fa-spinner fa-spin" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+          جاري تحميل التحاليل المطلوبة...
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LAB RESULT RECORDING MODAL -->
+<div id="labModal" class="overlay">
+  <div class="modal-card glass-panel" style="max-width:750px">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px">
+      <h3 style="font-weight:900;color:var(--teal)" id="mlPatName">اسم المريض...</h3>
+      <span onclick="closeModal('labModal')" style="cursor:pointer;font-weight:bold;font-size:1.2rem">✕</span>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.85rem">
+      <div><b>الطبيب المعالج:</b> <span id="mlDocName">...</span></div>
+      <div><b>تاريخ الطلب:</b> <span id="mlRequestDate">...</span></div>
+    </div>
+
+    <div>
+      <h4 style="margin-bottom:8px;font-weight:800"><i class="fas fa-flask"></i> تسجيل نتائج الفحوصات المخبرية:</h4>
+      <table class="inv-table">
+        <thead>
+          <tr style="background:rgba(255,255,255,0.01)">
+            <th>الفحص المطلوب</th>
+            <th>النتيجة الرقمية / الوصفية *</th>
+            <th>وحدة القياس</th>
+            <th>المعدل الطبيعي (Reference Range)</th>
+          </tr>
+        </thead>
+        <tbody id="mlTestsList">
+          <!-- Rendered dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px">ملاحظات المخبري وتوصيات التحليل</label>
+        <textarea id="mlNotes" rows="3" class="fi" style="height:auto;resize:none;padding:8px" placeholder="اكتب التقرير المخبري المالي أو الخلاصة..."></textarea>
+      </div>
+      <div>
+        <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px">مرفق التقرير المطبوع (تحميل PDF / صورة)</label>
+        <div class="fi" style="height:auto;display:flex;align-items:center;justify-content:center;border-style:dashed;cursor:pointer;padding:16px;text-align:center" onclick="document.getElementById('mlFileInp').click()">
+          <i class="fas fa-file-pdf" style="font-size:1.5rem;margin-left:8px;color:var(--teal)" id="pdfIcon"></i>
+          <span id="mlFileLbl">اضغط لرفع ملف التقرير المخبري المعتمد</span>
+          <input type="file" id="mlFileInp" style="display:none" onchange="handleAttachment(event)">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--border);padding-top:16px;margin-top:8px">
+      <div id="labActions" style="display:flex;gap:10px;width:100%">
+        <!-- Rendered based on status -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" style="position:fixed;bottom:20px;right:20px;background:rgba(13,148,136,0.9);color:#fff;padding:12px 24px;border-radius:10px;z-index:30000;display:none;backdrop-filter:blur(10px)"></div>
+
+<!-- SCRIPTS -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="argon-core.js"></script>
+<script src="argon-nid-gate.js"></script>
+<script src="argon-enterprise.js"></script>
+<script src="lab-app.js?v=20260606"></script>
+</body>
+</html>

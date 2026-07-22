@@ -1,0 +1,1 @@
+Line 1244: q('#hist .pt', '📜 ' + DT('histTitle')); q('#hist button', '<i class="fas fa-trash" style="margin-left:5px"></i>' + DT('clearHist'));

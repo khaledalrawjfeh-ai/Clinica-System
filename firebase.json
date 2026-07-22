@@ -1,0 +1,22 @@
+{
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "backup_original_files/**",
+      "backup_before_specialty_v2/**",
+      "ملفات معدلة مطورة/**",
+      "نظام العيادات/**",
+      "*.py",
+      "*.txt",
+      "*.md",
+      "*.bak",
+      "*.bak2"
+    ]
+  }
+}

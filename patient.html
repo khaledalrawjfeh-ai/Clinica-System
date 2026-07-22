@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#020706">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <title>ARGON | بوابة المريض الرقمية الذكية 📱</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="patient.css">
+</head>
+<body>
+
+<!-- PASSWORDLESS OTP LOGIN CONTAINER -->
+<div id="patientLogin" style="position:fixed;inset:0;background:var(--bg);z-index:20000;display:flex;align-items:center;justify-content:center;padding:16px;">
+  <div class="modal-card glass-panel" style="text-align:center">
+    <div style="font-size:3.5rem;margin-bottom:8px">🏥</div>
+    <h2 style="font-weight:900">بوابة المريض الرقمية</h2>
+    <p id="lClinicName" style="color:var(--teal);font-weight:700">ARGON Healthcare Platform</p>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">أدخل رقم هاتفك المسجل بالملف الطبي لتسجيل الدخول السريع</p>
+    
+    <!-- Step 1: Input Phone -->
+    <div id="loginStep1" style="display:flex;flex-direction:column;gap:12px">
+      <input type="tel" id="patPhone" class="fi" placeholder="رقم الهاتف (مثال: 079xxxxxxx)" onkeyup="if(event.key==='Enter')sendOtp()">
+      <button onclick="sendOtp()" class="btn-primary" style="justify-content:center"><i class="fas fa-paper-plane"></i> إرسال رمز التحقق</button>
+    </div>
+
+    <!-- Step 2: Input OTP (Simulated) -->
+    <div id="loginStep2" style="display:none;flex-direction:column;gap:12px">
+      <div style="background:rgba(20,184,166,0.1);padding:10px;border-radius:10px;border:1px solid var(--border)">
+        <span style="font-size:0.8rem;color:var(--teal);font-weight:700">لقد أرسلنا رمز التحقق المكون من 4 أرقام لهاتفك</span>
+      </div>
+      <input type="text" id="patOtp" class="fi" placeholder="أدخل رمز التحقق (4 أرقام)" maxLength="4" onkeyup="if(event.key==='Enter')verifyOtp()">
+      <button onclick="verifyOtp()" class="btn-primary" style="justify-content:center"><i class="fas fa-sign-in-alt"></i> تأكيد ودخول اللوحة</button>
+      <button onclick="backToPhone()" class="btn-secondary" style="font-size:0.8rem;padding:6px">تعديل رقم الهاتف</button>
+    </div>
+
+    <div id="lErr" style="color:var(--red);display:none;font-size:0.85rem;font-weight:700;margin-top:8px">رقم الهاتف غير مسجل أو رمز التحقق خاطئ ❌</div>
+  </div>
+</div>
+
+<!-- PROFILE SELECTOR MODAL (FOR MULTIPLE PROFILES ON SAME PHONE) -->
+<div id="profileSelectorModal" style="position:fixed;inset:0;background:rgba(2, 7, 6, 0.95);backdrop-filter:blur(10px);z-index:25000;display:none;align-items:center;justify-content:center;padding:16px;">
+  <div class="modal-card glass-panel" style="text-align:center;max-width:450px;width:100%">
+    <div style="font-size:3rem;margin-bottom:8px">👥</div>
+    <h2 style="font-weight:900;margin-bottom:6px">اختر الملف الشخصي</h2>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:18px">تم العثور على أكثر من ملف طبي مرتبط برقم الهاتف هذا. الرجاء تحديد ملفك للمتابعة:</p>
+    
+    <div id="profileSelectorList" style="display:flex;flex-direction:column;gap:10px;max-height:250px;overflow-y:auto;padding-right:4px;margin-bottom:18px">
+      <!-- Dynamic list of profiles -->
+    </div>
+    
+    <button onclick="logout()" class="btn-secondary" style="width:100%;justify-content:center"><i class="fas fa-arrow-left"></i> العودة لتسجيل الدخول</button>
+  </div>
+</div>
+
+<!-- MAIN APP BODY -->
+<div class="container no-print">
+
+  <!-- HEADER BRAND -->
+  <div class="header-bar">
+    <div class="brand" id="clinicLogo">ARGON CLINIC</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn-secondary" id="themeBtn" onclick="toggleTheme()" style="padding:6px 10px;border-radius:10px"><i class="fas fa-moon"></i></button>
+      <button class="btn-secondary" onclick="logout()" style="padding:6px 10px;color:var(--red);border-radius:10px"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+
+  <!-- DEMOGRAPHICS & PROFILE SUMMARY -->
+  <div class="demo-card glass-panel">
+    <div class="patient-info">
+      <div class="pat-avatar">👤</div>
+      <div>
+        <h2 style="font-weight:900" id="patName">اسم المريض...</h2>
+        <p style="font-size:0.8rem;color:var(--muted)">الرقم الطبي: <span id="patMrn" style="font-family:'IBM Plex Mono'">—</span></p>
+      </div>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;font-size:0.8rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:10px 0;margin:4px 0">
+      <div>
+        <div class="card-label">العمر</div>
+        <b id="patAge">—</b>
+      </div>
+      <div>
+        <div class="card-label">الجنس</div>
+        <b id="patGender">—</b>
+      </div>
+      <div>
+        <div class="card-label">فصيلة الدم</div>
+        <b id="patBlood" style="color:var(--red)">—</b>
+      </div>
+    </div>
+
+    <div>
+      <div class="card-label" style="margin-bottom:6px">الحساسية والأدوية المتعارضة:</div>
+      <div class="tag-list" id="patAllergies">
+        <span class="tag">لا يوجد</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="card-label" style="margin-bottom:6px">الأمراض المزمنة المسجلة:</div>
+      <div class="tag-list" id="patChronic">
+        <span class="tag blue">لا يوجد</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOK NEW APPOINTMENT FLOATING SHORTCUT -->
+  <a id="btnNewBooking" href="" class="btn-primary" style="text-decoration:none;justify-content:center;box-shadow:0 6px 20px rgba(99,102,241,0.3)"><i class="fas fa-calendar-plus"></i> حجز موعد طبي جديد الآن</a>
+
+  <!-- TAB SECTIONS -->
+
+  <!-- SECTION 1: HOME DASHBOARD -->
+  <div id="homeSec" class="sec on">
+    
+    <!-- Active Balance Card -->
+    <div class="balance-card glass-panel">
+      <div>
+        <div class="card-label">إجمالي الرصيد غير المدفوع</div>
+        <h1 style="font-weight:900;color:var(--amber)" id="totBalance">0.00 د.أ</h1>
+      </div>
+      <button class="btn-primary" onclick="sw('billingSec', document.getElementById('navBilling'))" style="padding:10px 14px"><i class="fas fa-wallet"></i> الفواتير</button>
+    </div>
+
+    <!-- Upcoming Appointments Card Grid -->
+    <div>
+      <h3 style="font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i class="far fa-calendar-check" style="color:var(--teal)"></i> المواعيد الطبية القادمة</h3>
+      <div id="upcomingGrid" style="display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;padding:24px;color:var(--muted)" class="glass-panel">لا توجد مواعيد مجدولة حالياً</div>
+      </div>
+    </div>
+
+    <!-- Direct Contact Shortcuts -->
+    <div class="glass-panel" style="padding:16px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h4 style="font-weight:800">هل تحتاج للمساعدة؟ 📞</h4>
+        <p style="font-size:0.75rem;color:var(--muted)">تواصل مباشرة مع خدمة عملاء الاستقبال</p>
+      </div>
+      <a href="" id="clinicCall" class="btn-secondary" style="text-decoration:none"><i class="fas fa-phone"></i> اتصل بنا</a>
+    </div>
+
+  </div>
+
+  <!-- SECTION 2: EMR TIMELINE / MEDICAL RECORD -->
+  <div id="timelineSec" class="sec">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h3 style="font-weight:900"><i class="fas fa-microscope" style="color:var(--teal)"></i> السجل الطبي الموحد (EMR)</h3>
+        <p style="font-size:0.75rem;color:var(--muted)">سجل الزيارات والوصفات والفحوصات الصادر عن أطباء المجمع</p>
+      </div>
+    </div>
+    <div id="patTimelineGrid" class="timeline">
+      <!-- Chronological Cards -->
+    </div>
+  </div>
+
+  <!-- SECTION 3: BILLING & PAYMENTS -->
+  <div id="billingSec" class="sec">
+    <div>
+      <h3 style="font-weight:900"><i class="fas fa-receipt" style="color:var(--amber)"></i> الفواتير والسجلات المالية</h3>
+      <p style="font-size:0.75rem;color:var(--muted)">استعراض وتفاصيل الفواتير الطبية والمدفوعات والمستحقات المباشرة</p>
+    </div>
+    
+    <div id="invoicesGrid" style="display:flex;flex-direction:column;gap:12px">
+      <!-- Invoices Rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- SECTION 4: NOTIFICATIONS / ALERTS -->
+  <div id="alertsSec" class="sec">
+    <div>
+      <h3 style="font-weight:900"><i class="fas fa-bell" style="color:var(--indigo)"></i> التنبيهات والتقارير الجاهزة</h3>
+      <p style="font-size:0.75rem;color:var(--muted)">الإشعارات اللحظية الصادرة عن المعامل والمختبرات وأجهزة الصيدلة</p>
+    </div>
+    
+    <div id="alertsGrid" style="display:flex;flex-direction:column;gap:10px">
+      <!-- Notifications -->
+    </div>
+  </div>
+
+  <!-- BOTTOM MOBILE NAVIGATION BAR -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="sw('homeSec',this)" id="navHome">
+      <i class="fas fa-home"></i>
+      <span>الرئيسية</span>
+    </div>
+    <div class="nav-item" onclick="sw('timelineSec',this)">
+      <i class="fas fa-notes-medical"></i>
+      <span>السجل الطبي</span>
+    </div>
+    <div class="nav-item" onclick="sw('billingSec',this)" id="navBilling">
+      <i class="fas fa-file-invoice-dollar"></i>
+      <span>الفواتير</span>
+    </div>
+    <div class="nav-item" onclick="sw('alertsSec',this)" style="position:relative">
+      <i class="fas fa-bell"></i>
+      <span>التنبيهات</span>
+      <span id="navAlertDot" style="display:none" class="notif-badge"></span>
+    </div>
+  </div>
+
+</div>
+
+<!-- INTERACTIVE PRESCRIPTION/REPORT DOWNLOAD MODAL (FOR PRINTING) -->
+<div id="printModal" class="overlay">
+  <div class="modal-card glass-panel" style="max-width:550px">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:10px">
+      <h3 style="font-weight:900;color:var(--teal)">📋 طباعة التقرير / المستند الطبي</h3>
+      <span onclick="closeModal('printModal')" style="cursor:pointer;font-weight:bold;font-size:1.2rem">✕</span>
+    </div>
+    
+    <div id="printArea" style="font-size:0.88rem;line-height:1.6;padding:10px;background:#fff;color:#000;border-radius:12px;border:1px solid #ccc;max-height:400px;overflow-y:auto">
+      <!-- Rendered printable content -->
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
+      <button class="btn-primary" onclick="doPrintContent()"><i class="fas fa-print"></i> بدء الطباعة / تنزيل PDF</button>
+      <button class="btn-secondary" onclick="closeModal('printModal')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY RADIOLOGY LIGHTBOX -->
+<div id="lightboxModal" class="overlay" onclick="closeModal('lightboxModal')">
+  <div style="max-width:90%;max-height:90%;text-align:center">
+    <img id="lightboxImg" src="" style="max-width:100%;max-height:80vh;border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.8);border:1px solid var(--border)">
+    <p style="color:#fff;margin-top:10px;font-size:0.9rem;font-weight:700">اضغط في أي مكان لإغلاق المعاينة 🩻</p>
+  </div>
+</div>
+
+<!-- TOAST ALERT -->
+<div id="toast" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(20,184,166,0.95);color:#fff;padding:10px 24px;border-radius:12px;z-index:30000;display:none;backdrop-filter:blur(10px);font-size:0.9rem;font-weight:700;box-shadow:0 10px 25px rgba(0,0,0,.3)"></div>
+
+<!-- SCRIPTS -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="patient-app.js"></script>
+</body>
+</html>

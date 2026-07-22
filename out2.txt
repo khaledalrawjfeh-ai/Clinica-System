@@ -1,0 +1,20 @@
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="argon-auth-bridge.js"></script>
+Security: Firebase Auth (email/password per clinic)
+authDomain: "clinica-system-e71b9.firebaseapp.com",
+const auth = firebase.auth();
+// ── AUTH & PRESENCE ──
+auth.signInAnonymously().then(r => {
+console.log("Firebase Auth Success:", _anonUid);
+}).catch(e => console.error("Firebase Auth Error:", e));
+sessionStorage.setItem('clinica_auth_' + CID, '1');
+// السبب: BillingEngine.init() يعمل قبل الدخول → isUiAuthorized=false
+BillingEngine.isUiAuthorized = true;
+auth.signInAnonymously().catch(() => { });
+if (typeof ArgonCore !== 'undefined' && ArgonCore.logAudit) ArgonCore.logAudit('PERMISSIONS_APPLIED', `قيود الواجهة طُبّقت لدور: ${role}`, 'AUTH');
+const ok = await ArgonEnterpriseAuth.login(uid, pass, role, isDoctor);
+sessionStorage.removeItem('clinica_auth_' + CID);
+if (sessionStorage.getItem('clinica_auth_' + CID) === '1') {
+<div style="font-size:0.75rem;margin-top:8px;font-weight:700;color:${d.enterpriseAuth && d.enterpriseAuth.passwordHash ? 'var(--green)' : 'var(--red)'}">
+<i class="fas ${d.enterpriseAuth && d.enterpriseAuth.passwordHash ? 'fa-lock' : 'fa-lock-open'}"></i> ${d.enterpriseAuth && d.enterpriseAuth.passwordHash ? 'تم تعيين كلمة مرور' : 'كلمة المرور مفقودة'}
+const hasPass = s.enterpriseAuth && s.enterpriseAuth.passwordHash;
