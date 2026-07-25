@@ -1,105 +1,153 @@
-# 🏥 Clinica System
+# 🏥 ARGON Medical OS (Clinica System)
 
-> A modern AI-ready Clinic Management System designed to streamline healthcare operations, improve patient experience, and simplify clinic administration.
-
----
-
-## Overview
-
-Clinica System is a comprehensive healthcare management platform that digitalizes daily clinic operations through an intuitive web-based interface.
-
-The system is designed to manage patients, appointments, medical records, billing, prescriptions, staff, and reporting while providing a scalable architecture for future AI integration.
+> **Production Multi-Tenant Electronic Medical Record (EMR) SaaS Platform**
+>
+> Currently serving **5 medical clinics in Jordan**.
 
 ---
 
-## Key Features
+# Overview
 
-- 👨‍⚕️ Patient Management
-- 📅 Appointment Scheduling
-- 🩺 Electronic Medical Records (EMR)
-- 💊 Prescription Management
-- 💰 Billing & Payments
-- 📊 Analytics Dashboard
-- 👥 Multi-user Roles
-- 🔐 Secure Authentication
-- ☁️ Cloud Ready
-- 📱 Responsive Design
+ARGON Medical OS is a production healthcare SaaS platform designed for clinics and medical centers.
+
+The platform digitizes the complete patient journey from appointment booking to diagnosis, pharmacy, laboratory, radiology, billing, and reporting through a real-time multi-tenant architecture.
+
+Unlike demo projects, ARGON Medical OS is actively used in production by multiple medical clinics.
 
 ---
 
-## Technologies
+# Production Highlights
+
+- ✅ Production Deployment
+- ✅ Serving 5 Medical Clinics
+- ✅ Multi-Tenant SaaS Architecture
+- ✅ Real-Time Synchronization
+- ✅ Role-Based Access Control (RBAC)
+- ✅ Electronic Medical Records (EMR)
+- ✅ Laboratory Management
+- ✅ Pharmacy Management
+- ✅ Radiology Module
+- ✅ Billing & Invoicing
+- ✅ Patient Portal
+- ✅ Queue Management
+
+---
+
+# System Modules
+
+## 👨‍⚕️ Clinical
+
+- Electronic Medical Records
+- Medical Timeline
+- Diagnoses
+- Prescriptions
+- Dental Charting (FDI)
+
+## 📅 Operations
+
+- Appointment Scheduling
+- Reception
+- Waiting Room
+- Queue Management
+
+## 💊 Pharmacy
+
+- Prescription Queue
+- Inventory Management
+- Dispensing Workflow
+
+## 🧪 Laboratory
+
+- Test Catalog
+- Laboratory Requests
+- Result Reporting
+
+## 🩻 Radiology
+
+- Imaging Requests
+- Image Upload
+- Report Management
+
+## 💰 Billing
+
+- Invoicing
+- Payments
+- Financial Reports
+
+---
+
+# Architecture
+
+Current Stack
 
 - HTML5
 - CSS3
-- JavaScript
-- Firebase
-- Firestore
-- Authentication
-- REST APIs
+- JavaScript (ES6)
+- Firebase Realtime Database
+- Firebase Storage
+- Firebase Hosting
 
 ---
 
-## Project Structure
+# Key Engineering Features
+
+- Multi-Tenant Data Isolation
+- Firebase Security Rules
+- Role-Based Access Control
+- Real-Time Database Synchronization
+- Patient Timeline
+- Global Patient Index (GMPI)
+- Backup & Recovery Mechanisms
+- Production Maintenance
+
+---
+
+# Screenshots
+
+(Add Dashboard screenshots here)
+
+---
+
+# Roadmap
+
+## Version 2
+
+- Firebase Authentication
+- Cloud Functions
+- Cloud Storage Migration
+- CI/CD
+- Automated Testing
+- FHIR Integration
+
+---
+
+# Repository Structure
 
 ```
-Clinica-System/
-│
-├── docs/
-├── frontend/
-├── dashboard/
-├── firebase/
-├── assets/
-├── icons/
-├── README.md
-└── LICENSE
+docs/
+frontend/
+assets/
+firebase/
+modules/
+README.md
 ```
 
 ---
 
-## System Modules
+# Status
 
-- Patient Registration
-- Doctors Management
-- Appointment Management
-- Medical Records
-- Prescriptions
-- Billing
-- Reports
-- Dashboard
-- Administration
+**Status:** Production
+
+**Deployment:** Active
+
+**Maintainer:** Khaled Bilal Alrawajfeh
 
 ---
 
-## Future Roadmap
+# Author
 
-- AI Clinical Assistant
-- Medical Image Analysis
-- OCR Support
-- Voice Dictation
-- Telemedicine
-- Mobile Application
-- Multi-Clinic Support
+Khaled Bilal Alrawajfeh
 
----
-
-## Current Status
-
-**Development Status:** Active
-
-This repository contains the current development version of Clinica System.
-
-Some advanced features are under continuous development.
-
----
-
-## License
-
-MIT License
-
----
-
-## Author
-
-**Khaled Alrawjfeh**
+Software Engineer
 
 Jordan
